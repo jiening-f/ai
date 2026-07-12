@@ -20,7 +20,7 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <h2 className="sidebar-title">全能脚本</h2>
+        <div className="sidebar-logo">全能脚本</div>
       </div>
       <nav className="sidebar-nav">
         {navItems.map((item) => (
@@ -37,6 +37,7 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <div className="sidebar-footer">v0.1.0</div>
     </aside>
   )
 }
