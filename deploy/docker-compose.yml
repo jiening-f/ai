@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: ai-game-tool-backend
+    ports:
+      - "8765:8765"
+    volumes:
+      - ../backend/data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/game_tool.db
+      - CORS_ORIGINS=http://localhost:5173
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # 前端开发服务 — 仅在开发时使用
+  frontend-dev:
+    image: node:20-alpine
+    container_name: ai-game-tool-frontend-dev
+    working_dir: /app
+    volumes:
+      - ../frontend:/app
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    profiles:
+      - dev
+    restart: unless-stopped
