@@ -143,8 +143,20 @@ async def execute_preset(preset_id: int, db: AsyncSession = Depends(get_db)):
     await db.flush()
     await db.refresh(execution)
 
+    # 创建 runner 并立即注册（消除 create_task 前的窗口期）
+    from engine.executor.context import ExecutionContext
+    from engine.executor.runner import ScriptRunner
+    from engine.executor.hooks import HookManager
+
+    ctx = ExecutionContext(str(execution.id))
+    hooks = HookManager()
+    runner = ScriptRunner(ctx, flow_data, hooks)
+
+    async with _execution_lock:
+        _running_executions[execution.id] = runner
+
     # 启动引擎（后台任务）
-    asyncio.create_task(_run_flow(execution.id, flow_data, db))
+    asyncio.create_task(_run_flow(runner))
 
     return ApiResponse(success=True, data={
         "execution_id": execution.id,
@@ -228,22 +240,16 @@ def _preset_to_dict(p: Preset) -> dict:
     }
 
 
-async def _run_flow(execution_id: int, flow_data: dict, db_session_factory):
-    """后台执行脚本流程"""
-    import time
+async def _run_flow(runner: "ScriptRunner"):
+    """后台执行脚本流程（runner 已在调用方注册到 _running_executions）"""
+    import datetime
     from engine.executor.context import ExecutionContext
     from engine.executor.runner import ScriptRunner
-    from engine.executor.hooks import HookManager
-    from app.models.execution import Execution, ExecutionStep
+    from app.models.execution import Execution
     from app.database import async_session_factory
 
-    ctx = ExecutionContext(str(execution_id))
-    hooks = HookManager()
-    runner = ScriptRunner(ctx, flow_data, hooks)
-
-    async with _execution_lock:
-        _running_executions[execution_id] = runner
-
+    ctx = runner.ctx
+    execution_id = int(ctx.execution_id)
     success = False
     try:
         success = await runner.run()

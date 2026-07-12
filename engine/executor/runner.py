@@ -244,7 +244,7 @@ class ScriptRunner:
         self._step_event = asyncio.Event()
         if self.ctx.status != ExecutionStatus.RUNNING:
             self.ctx.status = ExecutionStatus.RUNNING
-            if self.ctx._start_time == 0:
+            if not self.ctx.has_started:
                 self.ctx.start_timer()
             if not self._current_node_id:
                 self._current_node_id = self._start_node_id
@@ -262,6 +262,10 @@ class ScriptRunner:
 
     def is_paused(self) -> bool:
         return self.ctx.is_paused()
+
+    def is_stopped(self) -> bool:
+        """已停止（停止或错误状态）"""
+        return self.ctx.should_stop()
 
 
 async def create_test_flow() -> dict[str, dict]:

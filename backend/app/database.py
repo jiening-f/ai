@@ -6,7 +6,7 @@ SQLAlchemy 异步引擎与会话管理
 
 import os
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from app.config import settings
+from app.config import settings, DB_DIR, DATABASE_URL
 from app.models.base import Base
 import app.models.game     # noqa: F401 — 注册 ORM 模型
 import app.models.preset   # noqa: F401
@@ -16,7 +16,7 @@ import app.models.setting  # noqa: F401
 
 # 创建异步引擎
 engine = create_async_engine(
-    settings.database_url,
+    DATABASE_URL,
     echo=settings.db_echo,
 )
 
@@ -47,9 +47,8 @@ async def init_db():
     在应用启动时调用。
     """
     # 确保数据目录存在
-    db_dir = os.path.dirname(settings.db_path)
-    if db_dir and not os.path.exists(db_dir):
-        os.makedirs(db_dir, exist_ok=True)
+    if DB_DIR and not os.path.exists(DB_DIR):
+        os.makedirs(DB_DIR, exist_ok=True)
 
     # 创建所有表
     async with engine.begin() as conn:

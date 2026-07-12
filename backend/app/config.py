@@ -4,6 +4,7 @@
 使用 pydantic-settings 管理所有配置项，支持从环境变量读取。
 """
 
+import os
 from pydantic_settings import BaseSettings
 
 
@@ -43,3 +44,10 @@ class Settings(BaseSettings):
 
 # 全局单例
 settings = Settings()
+
+# 基于 config.py 自身位置解析绝对路径（不依赖 CWD）
+_THIS_DIR = os.path.dirname(os.path.abspath(__file__))  # backend/app/
+_BACKEND_DIR = os.path.dirname(_THIS_DIR)                # backend/
+DB_PATH = os.path.join(_BACKEND_DIR, settings.db_path)   # backend/data/app.db
+DB_DIR = os.path.dirname(DB_PATH)                        # backend/data/
+DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"

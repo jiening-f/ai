@@ -143,6 +143,11 @@ class ExecutionContext:
             return 0
         return (time.time() - self._start_time) * 1000
 
+    @property
+    def has_started(self) -> bool:
+        """定时器是否已启动"""
+        return self._start_time != 0.0
+
     def start_timer(self):
         self._start_time = time.time()
 
