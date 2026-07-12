@@ -1,134 +1,245 @@
-"""内置基础节点：start、end、wait、log"""
+"""
+流程控制节点
 
-from engine.nodes.base import BaseNode, NodeResult, NodeStatus
+- StartNode: 开始节点（流程入口，无实际操作）
+- EndNode: 结束节点（标记流程结束）
+- WaitNode: 等待节点（延迟指定毫秒）
+- ConditionNode: 条件判断节点（根据变量值分支）
+- LoopNode: 循环节点（条件满足时循环执行）
+"""
+
+import asyncio
+from engine.nodes.base import BaseNode, NodeResult
+from engine.executor.context import ExecutionContext
 
 
 class StartNode(BaseNode):
-    """流程开始节点 — 流程起点，直接通过"""
+    """脚本开始节点，标记流程入口"""
+
     node_type = "start"
 
-    async def execute(self, ctx) -> NodeResult:
-        ctx.info("流程开始", self.node_id)
-        return NodeResult(status=NodeStatus.SUCCESS)
+    async def execute(self, ctx: ExecutionContext) -> NodeResult:
+        ctx.log(f"[开始] 脚本开始执行")
+        return NodeResult(success=True)
+
+    @classmethod
+    def default_config(cls) -> dict:
+        return {"label": ""}
+
+    @classmethod
+    def description(cls) -> dict:
+        return {
+            "type": cls.node_type,
+            "name": "开始",
+            "category": "流程控制",
+            "description": "脚本流程的入口节点，一个脚本有且仅有一个开始节点",
+            "config_schema": {"label": {"type": "string", "default": "", "description": "节点标签"}},
+        }
 
 
 class EndNode(BaseNode):
-    """流程结束节点 — 流程终点"""
+    """脚本结束节点，标记流程结束"""
+
     node_type = "end"
 
-    async def execute(self, ctx) -> NodeResult:
-        ctx.info("流程结束", self.node_id)
-        return NodeResult(status=NodeStatus.SUCCESS, next_node=None)
+    async def execute(self, ctx: ExecutionContext) -> NodeResult:
+        ctx.log(f"[结束] 脚本执行完毕")
+        return NodeResult(success=True, next_node_id=None)
+
+    @classmethod
+    def default_config(cls) -> dict:
+        return {"label": ""}
+
+    @classmethod
+    def description(cls) -> dict:
+        return {
+            "type": cls.node_type,
+            "name": "结束",
+            "category": "流程控制",
+            "description": "脚本流程的结束节点，到达此节点后脚本停止执行",
+            "config_schema": {"label": {"type": "string", "default": "", "description": "节点标签"}},
+        }
 
 
 class WaitNode(BaseNode):
-    """等待节点 — 等待指定时长"""
+    """等待节点：延迟指定毫秒后继续"""
+
     node_type = "wait"
 
-    async def execute(self, ctx) -> NodeResult:
-        import asyncio
-        duration = float(self.config.get("duration", 1.0))
-        ctx.info(f"等待 {duration}s", self.node_id)
-        await asyncio.sleep(min(duration, 60))  # 最多 60 秒
-        return NodeResult(status=NodeStatus.SUCCESS)
+    async def execute(self, ctx: ExecutionContext) -> NodeResult:
+        duration_ms = self.config.get("duration_ms", 1000)
+        ctx.log(f"[等待] 等待 {duration_ms}ms")
+        await asyncio.sleep(duration_ms / 1000.0)
+        return NodeResult(success=True)
 
     def validate(self) -> bool:
-        duration = self.config.get("duration", 0)
+        duration = self.config.get("duration_ms", 0)
         return isinstance(duration, (int, float)) and duration >= 0
 
+    @classmethod
+    def default_config(cls) -> dict:
+        return {"duration_ms": 1000}
 
-class LogNode(BaseNode):
-    """日志节点 — 输出一条日志消息"""
-    node_type = "log"
-
-    async def execute(self, ctx) -> NodeResult:
-        message = self.config.get("message", "")
-        level = self.config.get("level", "INFO")
-        ctx.log(level, message, self.node_id)
-        return NodeResult(status=NodeStatus.SUCCESS)
+    @classmethod
+    def description(cls) -> dict:
+        return {
+            "type": cls.node_type,
+            "name": "等待",
+            "category": "流程控制",
+            "description": "暂停执行指定毫秒数",
+            "config_schema": {"duration_ms": {"type": "number", "default": 1000, "min": 0, "description": "等待毫秒数"}},
+        }
 
 
 class ConditionNode(BaseNode):
-    """条件分支节点 — 根据条件表达式选择分支
-
-    配置:
-        condition: Python 表达式字符串，可用变量 ctx.get_var('key')
-        true_branch: 条件为真时的下一个节点 id
-        false_branch: 条件为假时的下一个节点 id
     """
+    条件判断节点
+
+    根据条件表达式（condition 字段）在上下文中求值，
+    决定走哪个分支（next_nodes[0] 或 next_nodes[1]）。
+    条件表达式示例: "$var_name == 'value'", "$count > 5"
+    """
+
     node_type = "condition"
 
-    async def execute(self, ctx) -> NodeResult:
-        expression = self.config.get("condition", "True")
-        try:
-            # 安全求值：受限的变量作用域
-            safe_globals = {"__builtins__": {}}
-            safe_locals = {"ctx": ctx, "vars": ctx.get_all_variables()}
-            result = eval(expression, safe_globals, safe_locals)
-        except Exception as e:
-            return NodeResult(
-                status=NodeStatus.FAILED,
-                error=f"条件表达式求值失败: {e}",
-            )
+    async def execute(self, ctx: ExecutionContext) -> NodeResult:
+        if not self.condition:
+            ctx.log("[条件] 无条件表达式，走默认分支")
+            return NodeResult(success=True)
 
-        if result:
-            ctx.info(f"条件为真: {expression}", self.node_id)
-            return NodeResult(status=NodeStatus.SUCCESS)
-        else:
-            ctx.info(f"条件为假: {expression}", self.node_id)
-            return NodeResult(status=NodeStatus.SKIPPED)
+        # 在上下文中求值条件表达式
+        result = _eval_condition(self.condition, ctx)
+        ctx.log(f"[条件] '{self.condition}' → {result}")
 
-    def get_next_node(self, result: NodeResult) -> str:
-        if result.status == NodeStatus.SUCCESS:
-            return self.config.get("true_branch") or (
-                self.next_nodes[0] if self.next_nodes else None
-            )
-        else:
-            return self.config.get("false_branch") or (
-                self.next_nodes[1] if len(self.next_nodes) > 1 else None
-            )
+        if result and len(self.next_nodes) > 0:
+            return NodeResult(success=True, next_node_id=self.next_nodes[0])
+        elif not result and len(self.next_nodes) > 1:
+            return NodeResult(success=True, next_node_id=self.next_nodes[1])
+
+        # 无对应分支，走默认
+        return NodeResult(success=True)
+
+    def validate(self) -> bool:
+        return bool(self.condition)
+
+    @classmethod
+    def default_config(cls) -> dict:
+        return {"expression": ""}
+
+    @classmethod
+    def description(cls) -> dict:
+        return {
+            "type": cls.node_type,
+            "name": "条件判断",
+            "category": "流程控制",
+            "description": "根据变量值决定执行分支，条件为真走 next_nodes[0]，为假走 next_nodes[1]",
+            "config_schema": {"expression": {"type": "string", "default": "", "description": "条件表达式"}},
+        }
 
 
 class LoopNode(BaseNode):
-    """循环节点 — 条件满足时回到指定节点
-
-    配置:
-        condition: Python 表达式
-        loop_target: 循环回到的节点 id
-        max_iterations: 最大迭代次数（0=无限）
     """
+    循环节点
+
+    配置 loop_times（循环次数）或 loop_condition（循环条件），
+    条件满足时跳转到目标节点执行。
+    """
+
     node_type = "loop"
 
-    async def execute(self, ctx) -> NodeResult:
-        expression = self.config.get("condition", "True")
-        max_iter = int(self.config.get("max_iterations", 0))
+    async def execute(self, ctx: ExecutionContext) -> NodeResult:
+        loop_key = f"_loop_count_{self.node_id}"
+        current_count = ctx.get_var(loop_key, 0) + 1
+        ctx.set_var(loop_key, current_count)
 
-        # 检查迭代次数
-        counter_key = f"_loop_{self.node_id}_count"
-        count = ctx.get_var(counter_key, 0)
+        max_times = self.config.get("loop_times", 0)
+        loop_condition = self.config.get("loop_condition", "")
 
-        if max_iter > 0 and count >= max_iter:
-            ctx.info(f"循环已达上限 {max_iter}，退出", self.node_id)
-            return NodeResult(status=NodeStatus.SUCCESS)
+        should_continue = False
+        if max_times > 0 and current_count < max_times:
+            should_continue = True
+        elif loop_condition:
+            should_continue = _eval_condition(loop_condition, ctx)
 
-        try:
-            safe_globals = {"__builtins__": {}}
-            safe_locals = {"ctx": ctx, "vars": ctx.get_all_variables()}
-            should_loop = eval(expression, safe_globals, safe_locals)
-        except Exception as e:
-            return NodeResult(
-                status=NodeStatus.FAILED,
-                error=f"循环条件求值失败: {e}",
-            )
+        ctx.log(f"[循环] 第 {current_count} 次，继续: {should_continue}")
 
-        if should_loop:
-            ctx.set_var(counter_key, count + 1)
-            loop_target = self.config.get("loop_target", "")
-            ctx.info(f"循环 #{count + 1} → {loop_target}", self.node_id)
-            return NodeResult(
-                status=NodeStatus.SUCCESS,
-                next_node=loop_target or None,
-            )
+        if should_continue:
+            target = self.config.get("loop_target", "")
+            return NodeResult(success=True, next_node_id=target or None)
         else:
-            ctx.info("循环条件不满足，退出", self.node_id)
-            return NodeResult(status=NodeStatus.SUCCESS)
+            ctx.set_var(loop_key, 0)  # 重置计数器
+            return NodeResult(success=True)
+
+    def validate(self) -> bool:
+        return bool(self.config.get("loop_times") or self.config.get("loop_condition"))
+
+    @classmethod
+    def default_config(cls) -> dict:
+        return {"loop_times": 0, "loop_condition": "", "loop_target": ""}
+
+    @classmethod
+    def description(cls) -> dict:
+        return {
+            "type": cls.node_type,
+            "name": "循环",
+            "category": "流程控制",
+            "description": "按次数或条件循环执行指定节点",
+            "config_schema": {
+                "loop_times": {"type": "number", "default": 0, "description": "循环次数，0 表示不限"},
+                "loop_condition": {"type": "string", "default": "", "description": "循环条件表达式"},
+                "loop_target": {"type": "string", "default": "", "description": "循环目标节点 ID"},
+            },
+        }
+
+
+def _eval_condition(expression: str, ctx: ExecutionContext) -> bool:
+    """
+    在上下文中安全地求值条件表达式
+
+    支持的格式：
+    - "$var == 'value'" — 变量等于某值
+    - "$var != 'value'" — 变量不等于
+    - "$var > N" / "$var < N" — 数值比较
+    - "$var" — 变量为真值（非空、非零）
+
+    安全限制：不使用 eval()，仅解析简单表达式。
+    """
+    import re
+
+    expr = expression.strip()
+
+    # 匹配运算符
+    match = re.match(r'\$(\w+)\s*(==|!=|>=|<=|>|<)\s*(.+)', expr)
+    if match:
+        var_name = match.group(1)
+        op = match.group(2)
+        raw_value = match.group(3).strip().strip("'").strip('"')
+
+        var_value = ctx.get_var(var_name, "")
+
+        # 尝试数值比较
+        try:
+            var_num = float(var_value)
+            cmp_num = float(raw_value)
+            if op == "==": return var_num == cmp_num
+            if op == "!=": return var_num != cmp_num
+            if op == ">": return var_num > cmp_num
+            if op == "<": return var_num < cmp_num
+            if op == ">=": return var_num >= cmp_num
+            if op == "<=": return var_num <= cmp_num
+        except (ValueError, TypeError):
+            pass
+
+        # 字符串比较
+        if op == "==": return str(var_value) == raw_value
+        if op == "!=": return str(var_value) != raw_value
+        return False
+
+    # 简单变量真值判断: $var
+    match = re.match(r'\$(\w+)$', expr)
+    if match:
+        var_name = match.group(1)
+        var_value = ctx.get_var(var_name)
+        return bool(var_value)
+
+    return False

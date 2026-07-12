@@ -1,72 +1,97 @@
-"""节点基类定义 — 所有脚本节点的抽象基类"""
+"""
+节点基类定义
 
-from __future__ import annotations
+BaseNode: 所有脚本节点的抽象基类
+NodeResult: 节点执行结果
+"""
+
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Optional, TYPE_CHECKING
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from engine.executor.context import ExecutionContext
 
 
-class NodeStatus(Enum):
-    """节点执行结果状态"""
-    SUCCESS = "success"       # 执行成功，继续下一个节点
-    FAILED = "failed"         # 执行失败
-    SKIPPED = "skipped"       # 跳过（条件不满足）
-    WAITING = "waiting"       # 等待中（异步操作未完成）
-
-
 @dataclass
 class NodeResult:
     """节点执行结果"""
-    status: NodeStatus
-    data: Any = None              # 节点输出数据
-    error: Optional[str] = None   # 错误信息
-    next_node: Optional[str] = None  # 指定下一个节点（覆盖默认流程）
+
+    success: bool = True
+    """执行是否成功"""
+
+    next_node_id: str | None = None
+    """覆盖默认的下一个节点 ID（条件分支/循环跳转时使用）"""
+
+    data: dict = field(default_factory=dict)
+    """节点输出的数据，合并到执行上下文变量中"""
+
+    error_message: str = ""
+    """失败时的错误信息"""
 
 
 class BaseNode(ABC):
-    """脚本节点基类
+    """
+    脚本节点抽象基类
 
-    所有节点类型（开始/按键/OCR识别等）都继承此类。
-    子类需要定义 node_type 并实现 execute() 方法。
+    所有节点类型必须继承此类并实现 execute() 和 validate() 方法。
     """
 
-    node_type: str = "base"
+    # 子类必须设置
+    node_type: str = ""
 
-    def __init__(self, node_id: str, config: Optional[dict] = None):
+    def __init__(
+        self,
+        node_id: str,
+        config: dict | None = None,
+        next_nodes: list[str] | None = None,
+        condition: str | None = None,
+    ):
         self.node_id = node_id
         self.config = config or {}
-        self.next_nodes: list[str] = []     # 默认后续节点
-        self.condition: Optional[str] = None  # 条件表达式（条件节点用）
+        self.next_nodes = next_nodes or []
+        self.condition = condition
 
     @abstractmethod
-    async def execute(self, ctx: ExecutionContext) -> NodeResult:
-        """执行节点逻辑（子类必须实现）"""
+    async def execute(self, ctx: "ExecutionContext") -> NodeResult:
+        """
+        执行节点逻辑
+
+        子类实现具体的节点行为。调用 ctx 访问变量、截图缓存、日志等。
+
+        Args:
+            ctx: 执行上下文
+
+        Returns:
+            NodeResult: 执行结果
+        """
         ...
 
     def validate(self) -> bool:
-        """验证节点配置是否合法（子类可覆盖）"""
-        return bool(self.node_id)
+        """
+        验证节点配置是否合法
 
-    def get_next_node(self, result: NodeResult) -> Optional[str]:
-        """根据执行结果决定下一个节点（条件节点覆盖此方法）"""
-        if result.next_node:
-            return result.next_node
-        if self.next_nodes:
-            return self.next_nodes[0]
-        return None
+        默认返回 True。子类可重写以检查必要字段。
 
-    def to_dict(self) -> dict:
+        Returns:
+            bool: 配置有效为 True
+        """
+        return True
+
+    @classmethod
+    def default_config(cls) -> dict:
+        """返回节点的默认配置模板"""
+        return {}
+
+    @classmethod
+    def description(cls) -> dict:
+        """
+        返回节点元数据（名称、分类、描述、配置 schema）
+        """
         return {
-            "node_id": self.node_id,
-            "node_type": self.node_type,
-            "config": self.config,
-            "next_nodes": self.next_nodes,
-            "condition": self.condition,
+            "type": cls.node_type,
+            "name": cls.__name__,
+            "category": "other",
+            "description": "",
+            "config_schema": cls.default_config(),
         }
-
-    def __repr__(self) -> str:
-        return f"{self.node_type}({self.node_id})"

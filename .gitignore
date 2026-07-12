@@ -3,6 +3,6 @@ __pycache__/
 node_modules/
 dist/
 .env
-backend/data/
+backend/data/*.db
 *.spec
 build/
