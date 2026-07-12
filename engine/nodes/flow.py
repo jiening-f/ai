@@ -76,7 +76,8 @@ class ConditionNode(BaseNode):
             next_node=self.next_nodes[0] if result else (self.next_nodes[1] if len(self.next_nodes) > 1 else None),
         )
 
-    def _eval_expression(self, expr: str, variables: dict[str, Any]) -> bool:
+    @staticmethod
+    def _eval_expression(expr: str, variables: dict[str, Any]) -> bool:
         """安全地求值简单布尔表达式。"""
         import re
         # 替换变量引用 {{var}} → 实际值
@@ -116,7 +117,7 @@ class LoopNode(BaseNode):
 
         if loop_expr:
             try:
-                should_continue = ConditionNode._eval_expression(self, loop_expr, ctx.variables)
+                should_continue = ConditionNode._eval_expression(loop_expr, ctx.variables)
                 if not should_continue:
                     ctx.delete_var("__loop_iteration__")
                     ctx.log("[loop] 循环条件不满足，退出")
