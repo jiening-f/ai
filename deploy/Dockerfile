@@ -30,6 +30,7 @@ WORKDIR /app
 
 # 安装运行时所需系统库（OpenCV、OCR 等）
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
