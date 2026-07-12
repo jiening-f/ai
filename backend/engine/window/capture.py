@@ -92,7 +92,7 @@ def _win32_printwindow(hwnd: int) -> Optional[np.ndarray]:
 
         if not result:
             # 降级：不带 PW_RENDERFULLCONTENT 标志重试
-            ctypes.windll.user32.PrintWindow(
+            result = ctypes.windll.user32.PrintWindow(
                 ctypes.c_void_p(hwnd),
                 ctypes.c_void_p(save_dc.GetSafeHdc()),
                 0,
@@ -132,6 +132,7 @@ def _win32_gdi_region(x: int, y: int, w: int, h: int) -> Optional[np.ndarray]:
     """使用 GDI BitBlt + GetDIBits 截取屏幕区域
     返回 BGR 格式的 numpy 数组，零中间转换
     """
+    hdc_screen = hdc_mem = bmp = None
     try:
         hdc_screen = ctypes.windll.user32.GetDC(None)
         hdc_mem = ctypes.windll.gdi32.CreateCompatibleDC(hdc_screen)
@@ -157,13 +158,26 @@ def _win32_gdi_region(x: int, y: int, w: int, h: int) -> Optional[np.ndarray]:
         else:
             result = arr[..., :3]
 
-        ctypes.windll.gdi32.DeleteObject(bmp)
-        ctypes.windll.gdi32.DeleteDC(hdc_mem)
-        ctypes.windll.user32.ReleaseDC(None, hdc_screen)
         return result
     except Exception as e:
         _flog(f"GDI 区域截图异常: {e}")
         return None
+    finally:
+        try:
+            if bmp:
+                ctypes.windll.gdi32.DeleteObject(bmp)
+        except Exception:
+            pass
+        try:
+            if hdc_mem:
+                ctypes.windll.gdi32.DeleteDC(hdc_mem)
+        except Exception:
+            pass
+        try:
+            if hdc_screen:
+                ctypes.windll.user32.ReleaseDC(None, hdc_screen)
+        except Exception:
+            pass
 
 
 def _win32_get_window_rect(hwnd: int) -> Optional[tuple]:
@@ -216,7 +230,7 @@ class WindowCapture:
                 return img
 
         # 策略2: 降级 — 激活窗口后 GDI 区域截图
-        _flog("PrintWindow 返回空/黑屏，降级为前台区域截图")
+        _flog("PrintWindow 截图质量不足，降级为前台区域截图")
         rect = _win32_get_window_rect(hwnd)
         if not rect:
             return None

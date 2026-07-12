@@ -18,9 +18,8 @@ except ImportError:
 def _win32_get_process_name(pid: int) -> str:
     """通过 PID 获取进程名"""
     try:
-        if psutil:
-            proc = psutil.Process(pid)
-            return proc.name()
+        proc = psutil.Process(pid)
+        return proc.name()
     except Exception:
         pass
     return ""

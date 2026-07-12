@@ -58,29 +58,6 @@ def _win32_is_minimized(hwnd: int) -> bool:
         return False
 
 
-def _win32_get_placement(hwnd: int) -> Optional[int]:
-    """获取窗口显示状态（SW_SHOWNORMAL / SW_SHOWMINIMIZED 等）"""
-    try:
-        import ctypes
-        from ctypes import wintypes
-
-        class WINDOWPLACEMENT(ctypes.Structure):
-            _fields_ = [
-                ("length", wintypes.DWORD),
-                ("flags", wintypes.DWORD),
-                ("showCmd", wintypes.DWORD),
-            ]
-
-        wp = WINDOWPLACEMENT()
-        wp.length = ctypes.sizeof(WINDOWPLACEMENT)
-        ctypes.windll.user32.GetWindowPlacement(
-            ctypes.c_void_p(hwnd), ctypes.byref(wp)
-        )
-        return wp.showCmd
-    except Exception:
-        return None
-
-
 # ══ 窗口操作器 ═════════════════════════════════════
 
 class WindowOperator:
@@ -160,8 +137,8 @@ class WindowOperator:
                 time.sleep(0.1)
                 win32process.AttachThreadInput(cur_tid, target_tid, False)
                 return True
-            except Exception:
-                pass
+            except Exception as e:
+                _flog(f"窗口置顶: AttachThreadInput 失败 ({e})，尝试 Alt 键模拟")
 
             # 策略2: Alt 键模拟
             try:
