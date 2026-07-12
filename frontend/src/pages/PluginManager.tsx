@@ -45,8 +45,8 @@ function PluginManager() {
       await pluginsApi.install(file)
       toast({ type: 'success', title: `插件"${file.name}"安装成功` })
       loadPlugins()
-    } catch {
-      toast({ type: 'success', title: `插件"${file.name}"安装成功` })
+    } catch (err) {
+      toast({ type: 'error', title: `安装失败`, description: err instanceof Error ? err.message : '未知错误' })
       loadPlugins()
     }
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -57,8 +57,8 @@ function PluginManager() {
     try {
       await pluginsApi.uninstall(uninstallTarget.id)
       toast({ type: 'success', title: `已卸载"${uninstallTarget.name}"` })
-    } catch {
-      toast({ type: 'success', title: `已卸载"${uninstallTarget.name}"` })
+    } catch (err) {
+      toast({ type: 'error', title: '卸载失败', description: err instanceof Error ? err.message : '未知错误' })
     }
     setUninstallTarget(null)
     loadPlugins()
@@ -74,10 +74,8 @@ function PluginManager() {
         type: 'info',
         title: plugin.enabled ? `已禁用"${plugin.name}"` : `已启用"${plugin.name}"`,
       })
-    } catch {
-      setPlugins((prev) =>
-        prev.map((p) => (p.id === plugin.id ? { ...p, enabled: !p.enabled } : p)),
-      )
+    } catch (err) {
+      toast({ type: 'error', title: '操作失败', description: err instanceof Error ? err.message : '未知错误' })
     }
   }
 

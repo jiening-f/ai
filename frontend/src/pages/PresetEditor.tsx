@@ -130,8 +130,8 @@ function PresetEditor() {
         await presetsApi.create(Number(gameId || '0'), data)
         toast({ type: 'success', title: '预设已创建' })
       }
-    } catch {
-      toast({ type: 'success', title: '预设已保存' })
+    } catch (err) {
+      toast({ type: 'error', title: '保存失败', description: err instanceof Error ? err.message : '未知错误' })
     }
     setSaving(false)
   }

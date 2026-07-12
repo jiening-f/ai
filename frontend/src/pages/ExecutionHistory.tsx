@@ -80,8 +80,8 @@ function ExecutionHistory() {
     try {
       await executionsApi.delete(deleteTarget.id)
       toast({ type: 'success', title: '执行记录已删除' })
-    } catch {
-      toast({ type: 'success', title: '执行记录已删除' })
+    } catch (err) {
+      toast({ type: 'error', title: '删除失败', description: err instanceof Error ? err.message : '未知错误' })
     }
     setDeleteTarget(null)
     loadExecutions()

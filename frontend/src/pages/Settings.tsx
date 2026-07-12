@@ -21,7 +21,17 @@ function Settings() {
   useEffect(() => {
     settingsApi
       .getAll()
-      .then(setSettings)
+      .then((data: unknown) => {
+        if (Array.isArray(data)) {
+          const map: SettingsMap = {}
+          data.forEach((item: { key: string; value: string }) => {
+            map[item.key] = item.value
+          })
+          setSettings(map)
+        } else {
+          setSettings(data as SettingsMap)
+        }
+      })
       .catch(() => {
         // 默认设置
         setSettings({
@@ -48,8 +58,8 @@ function Settings() {
     try {
       await settingsApi.setMultiple(settings)
       toast({ type: 'success', title: '设置已保存' })
-    } catch {
-      toast({ type: 'success', title: '设置已保存' })
+    } catch (err) {
+      toast({ type: 'error', title: '保存失败', description: err instanceof Error ? err.message : '未知错误' })
     }
     setSaving(false)
   }

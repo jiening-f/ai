@@ -6,6 +6,12 @@ interface RequestOptions {
   headers?: Record<string, string>
 }
 
+interface ApiResponse<T> {
+  success: boolean
+  data: T | null
+  error: string | null
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -33,12 +39,21 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const res = await fetch(`${API_BASE}${path}`, config)
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new ApiError(res.status, text || `请求失败 (${res.status})`)
+  if (res.status === 204) {
+    return undefined as T
   }
 
-  return res.json()
+  const json: ApiResponse<T> = await res.json().catch(() => ({
+    success: false,
+    data: null,
+    error: `解析响应失败 (${res.status})`,
+  }))
+
+  if (!json.success) {
+    throw new ApiError(res.status, json.error || `请求失败 (${res.status})`)
+  }
+
+  return json.data as T
 }
 
 export const api = {

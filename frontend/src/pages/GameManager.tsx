@@ -70,11 +70,8 @@ function GameManager() {
       }
       setShowForm(false)
       loadGames()
-    } catch {
-      // 后端不可用时本地更新
-      toast({ type: 'success', title: editingGame ? '游戏已更新' : '游戏已添加' })
-      setShowForm(false)
-      loadGames()
+    } catch (err) {
+      toast({ type: 'error', title: '操作失败', description: err instanceof Error ? err.message : '未知错误' })
     }
   }
 
@@ -83,11 +80,11 @@ function GameManager() {
     try {
       await gamesApi.delete(deleteTarget.id)
       toast({ type: 'success', title: `已删除 "${deleteTarget.name}"` })
-    } catch {
-      toast({ type: 'success', title: `已删除 "${deleteTarget.name}"` })
+      setDeleteTarget(null)
+      loadGames()
+    } catch (err) {
+      toast({ type: 'error', title: '删除失败', description: err instanceof Error ? err.message : '未知错误' })
     }
-    setDeleteTarget(null)
-    loadGames()
   }
 
   const handleCardClick = (game: Game) => {
