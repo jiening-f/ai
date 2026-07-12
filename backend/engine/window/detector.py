@@ -13,14 +13,18 @@ except ImportError:
     _HAS_W32 = False
 
 
+def is_available() -> bool:
+    """检查窗口检测模块是否可用（pywin32 + psutil 是否已安装）"""
+    return _HAS_W32
+
+
 # ══ 私有 Win32 封装 ════════════════════════════════
 
 def _win32_get_process_name(pid: int) -> str:
     """通过 PID 获取进程名"""
     try:
-        if psutil:
-            proc = psutil.Process(pid)
-            return proc.name()
+        proc = psutil.Process(pid)
+        return proc.name()
     except Exception:
         pass
     return ""
