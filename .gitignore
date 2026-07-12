@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+node_modules/
+dist/
+.env
+backend/data/
+*.spec
+build/
+.DS_Store
+Thumbs.db
