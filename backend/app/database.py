@@ -8,6 +8,11 @@ import os
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from app.config import settings
 from app.models.base import Base
+import app.models.game     # noqa: F401 — 注册 ORM 模型
+import app.models.preset   # noqa: F401
+import app.models.execution  # noqa: F401
+import app.models.plugin   # noqa: F401
+import app.models.setting  # noqa: F401
 
 # 创建异步引擎
 engine = create_async_engine(
