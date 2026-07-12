@@ -1,0 +1,19 @@
+{
+  "name": "鸣潮",
+  "name_en": "Wuthering Waves",
+  "publisher": "Kuro Games",
+  "window_title": "鸣潮",
+  "window_title_alt": "Wuthering Waves",
+  "window_class": "UnrealWindow",
+  "launch_path": "",
+  "default_capture_region": {
+    "x": 0,
+    "y": 0,
+    "width": 1920,
+    "height": 1080
+  },
+  "resolution": "1920x1080",
+  "fullscreen": true,
+  "ocr_language": "chi_sim",
+  "description": "鸣潮是一款开放世界动作RPG游戏。内置预设支持每日任务自动完成、活跃度奖励领取等日常操作。"
+}

@@ -1,0 +1,19 @@
+{
+  "name": "绝区零",
+  "name_en": "Zenless Zone Zero",
+  "publisher": "miHoYo/HoYoverse",
+  "window_title": "绝区零",
+  "window_title_alt": "Zenless Zone Zero",
+  "window_class": "UnityWndClass",
+  "launch_path": "",
+  "default_capture_region": {
+    "x": 0,
+    "y": 0,
+    "width": 1920,
+    "height": 1080
+  },
+  "resolution": "1920x1080",
+  "fullscreen": true,
+  "ocr_language": "chi_sim",
+  "description": "绝区零是一款都市幻想动作RPG游戏。内置预设支持日常刷取、录像店经营等日常操作。"
+}

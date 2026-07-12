@@ -1,0 +1,436 @@
+{
+  "name": "鸣潮每日任务",
+  "description": "自动完成鸣潮每日任务流程：领取活跃度奖励→追踪任务→传送→战斗→领奖→循环。需在主城界面启动。",
+  "mode": "step",
+  "max_runs": 5,
+  "round_interval": 3,
+  "chain": true,
+  "steps": [
+    {
+      "id": "step_wait_init",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "2.0",
+      "duration": 2.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "等待游戏界面加载"
+    },
+    {
+      "id": "step_open_activity",
+      "condition_type": "text",
+      "condition_value": "活跃度",
+      "action_type": "press_key",
+      "action_value": "f2",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "活跃度",
+      "description": "打开活跃度界面",
+      "on_error": "retry",
+      "max_retries": 3
+    },
+    {
+      "id": "step_claim_activity",
+      "condition_type": "text",
+      "condition_value": "领取",
+      "action_type": "click_text",
+      "action_value": "领取",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "领取活跃度奖励"
+    },
+    {
+      "id": "step_claim_all_rewards",
+      "condition_type": "text",
+      "condition_value": "一键领取",
+      "action_type": "click_text",
+      "action_value": "一键领取",
+      "duration": 0.3,
+      "delay": 1.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "一键领取所有已完成奖励"
+    },
+    {
+      "id": "step_close_activity",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "esc",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "关闭活跃度界面"
+    },
+    {
+      "id": "step_open_quest_log",
+      "condition_type": "text",
+      "condition_value": "任务",
+      "action_type": "press_key",
+      "action_value": "j",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "每日",
+      "description": "打开任务日志"
+    },
+    {
+      "id": "step_select_daily",
+      "condition_type": "text",
+      "condition_value": "每日",
+      "action_type": "click_text",
+      "action_value": "每日",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "追踪",
+      "description": "切换到每日任务"
+    },
+    {
+      "id": "step_track_quest",
+      "condition_type": "text",
+      "condition_value": "追踪",
+      "action_type": "click_text",
+      "action_value": "追踪",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "追踪当前每日任务"
+    },
+    {
+      "id": "step_close_quest_log",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "esc",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "关闭任务日志"
+    },
+    {
+      "id": "step_open_map",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "m",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "打开地图"
+    },
+    {
+      "id": "step_teleport",
+      "condition_type": "text",
+      "condition_value": "传送",
+      "action_type": "click_text",
+      "action_value": "传送",
+      "duration": 0.5,
+      "delay": 3.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "点击最近传送锚点"
+    },
+    {
+      "id": "step_wait_load",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "4.0",
+      "duration": 4.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "等待传送加载"
+    },
+    {
+      "id": "step_grapple",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "t",
+      "duration": 0.5,
+      "delay": 0.5,
+      "count": 2,
+      "enabled": true,
+      "verify_text": "",
+      "description": "使用钩索快速移动"
+    },
+    {
+      "id": "step_move_forward",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "w",
+      "duration": 2.5,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "向前移动"
+    },
+    {
+      "id": "step_dash",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "shift",
+      "duration": 0.3,
+      "delay": 0.5,
+      "count": 3,
+      "enabled": true,
+      "verify_text": "",
+      "description": "闪避冲刺"
+    },
+    {
+      "id": "step_interact_target",
+      "condition_type": "text",
+      "condition_value": "互动",
+      "action_type": "press_key",
+      "action_value": "f",
+      "duration": 0.2,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "与目标互动"
+    },
+    {
+      "id": "step_auto_battle_skill",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "e",
+      "duration": 0.2,
+      "delay": 0.5,
+      "count": 5,
+      "enabled": true,
+      "verify_text": "",
+      "description": "释放共鸣技能"
+    },
+    {
+      "id": "step_auto_battle_ult",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "q",
+      "duration": 0.5,
+      "delay": 1.5,
+      "count": 2,
+      "enabled": true,
+      "verify_text": "",
+      "description": "释放共鸣解放"
+    },
+    {
+      "id": "step_auto_attack",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "mouse_click",
+      "action_value": "left",
+      "duration": 0.1,
+      "delay": 0.15,
+      "count": 10,
+      "enabled": true,
+      "verify_text": "",
+      "description": "普通攻击连点"
+    },
+    {
+      "id": "step_dodge",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "space",
+      "duration": 0.2,
+      "delay": 0.8,
+      "count": 3,
+      "enabled": true,
+      "verify_text": "",
+      "description": "跳跃闪避"
+    },
+    {
+      "id": "step_detect_complete",
+      "condition_type": "text",
+      "condition_value": "完成",
+      "action_type": "press_key",
+      "action_value": "f",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "奖励",
+      "description": "检测任务完成标志"
+    },
+    {
+      "id": "step_claim_reward",
+      "condition_type": "text",
+      "condition_value": "领取",
+      "action_type": "click_text",
+      "action_value": "领取",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "领取完成奖励"
+    },
+    {
+      "id": "step_collect",
+      "condition_type": "text",
+      "condition_value": "拾取",
+      "action_type": "press_key",
+      "action_value": "f",
+      "duration": 0.2,
+      "delay": 0.3,
+      "count": 2,
+      "enabled": true,
+      "verify_text": "",
+      "description": "拾取掉落物品",
+      "on_error": "continue"
+    },
+    {
+      "id": "step_wait_round",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "3.0",
+      "duration": 3.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "轮次间隔等待"
+    }
+  ],
+  "nodes": {
+    "start": {
+      "node_type": "start",
+      "config": {},
+      "next_nodes": ["wait_init"]
+    },
+    "wait_init": {
+      "node_type": "wait",
+      "config": {"duration": 2.0},
+      "next_nodes": ["open_activity"]
+    },
+    "open_activity": {
+      "node_type": "key_press",
+      "config": {"key": "f2", "delay": 1.0},
+      "next_nodes": ["claim_activity"]
+    },
+    "claim_activity": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "领取", "timeout": 3},
+      "next_nodes": ["claim_all"]
+    },
+    "claim_all": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "一键领取", "timeout": 3, "on_error": "continue"},
+      "next_nodes": ["close_activity"]
+    },
+    "close_activity": {
+      "node_type": "key_press",
+      "config": {"key": "esc", "delay": 1.0},
+      "next_nodes": ["open_quest"]
+    },
+    "open_quest": {
+      "node_type": "key_press",
+      "config": {"key": "j", "delay": 1.0},
+      "next_nodes": ["select_daily"]
+    },
+    "select_daily": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "每日", "timeout": 3},
+      "next_nodes": ["track_quest"]
+    },
+    "track_quest": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "追踪", "timeout": 3},
+      "next_nodes": ["close_quest"]
+    },
+    "close_quest": {
+      "node_type": "key_press",
+      "config": {"key": "esc", "delay": 1.0},
+      "next_nodes": ["open_map"]
+    },
+    "open_map": {
+      "node_type": "key_press",
+      "config": {"key": "m"},
+      "next_nodes": ["teleport"]
+    },
+    "teleport": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "传送", "timeout": 5, "on_error": "continue"},
+      "next_nodes": ["wait_load"]
+    },
+    "wait_load": {
+      "node_type": "wait",
+      "config": {"duration": 4.0},
+      "next_nodes": ["move_to_target"]
+    },
+    "move_to_target": {
+      "node_type": "key_press",
+      "config": {"key": "w", "duration": 2.5},
+      "next_nodes": ["grapple"]
+    },
+    "grapple": {
+      "node_type": "key_press",
+      "config": {"key": "t", "duration": 0.5, "repeat": 2, "repeat_delay": 0.5},
+      "next_nodes": ["battle_sequence"]
+    },
+    "battle_sequence": {
+      "node_type": "sequence",
+      "config": {"loop": 5},
+      "next_nodes": ["detect_complete"]
+    },
+    "detect_complete": {
+      "node_type": "ocr_detect",
+      "config": {"target_text": "完成", "timeout": 30, "on_found": "claim", "on_not_found": "battle_sequence"},
+      "next_nodes": ["claim_reward"]
+    },
+    "claim_reward": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "领取", "timeout": 3},
+      "next_nodes": ["loop_check"]
+    },
+    "loop_check": {
+      "node_type": "condition",
+      "config": {
+        "condition": "vars.get('loop_count', 0) < vars.get('max_loops', 5)",
+        "true_branch": "wait_round",
+        "false_branch": "end"
+      },
+      "next_nodes": ["wait_round", "end"]
+    },
+    "wait_round": {
+      "node_type": "wait",
+      "config": {"duration": 3.0},
+      "next_nodes": ["open_activity"]
+    },
+    "end": {
+      "node_type": "end",
+      "config": {},
+      "next_nodes": []
+    }
+  }
+}

@@ -1,0 +1,384 @@
+{
+  "name": "原神每日委托",
+  "description": "自动完成原神每日委托流程：领取委托→传送→战斗→领取奖励→循环。需在游戏主界面启动。",
+  "mode": "step",
+  "max_runs": 4,
+  "round_interval": 3,
+  "chain": true,
+  "steps": [
+    {
+      "id": "step_wait_init",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "2.0",
+      "duration": 2.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "等待游戏界面加载"
+    },
+    {
+      "id": "step_open_adventure_book",
+      "condition_type": "text",
+      "condition_value": "冒险之证",
+      "action_type": "press_key",
+      "action_value": "f1",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "委托",
+      "description": "打开冒险之证界面",
+      "on_error": "retry",
+      "max_retries": 3
+    },
+    {
+      "id": "step_claim_reward",
+      "condition_type": "text",
+      "condition_value": "领取奖励",
+      "action_type": "click_text",
+      "action_value": "领取奖励",
+      "duration": 0.3,
+      "delay": 1.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "已领取",
+      "description": "领取每日委托奖励（如有）"
+    },
+    {
+      "id": "step_navigate_commissions",
+      "condition_type": "text",
+      "condition_value": "委托",
+      "action_type": "click_text",
+      "action_value": "委托",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "追踪",
+      "description": "切换到委托标签页"
+    },
+    {
+      "id": "step_track_commission",
+      "condition_type": "text",
+      "condition_value": "追踪",
+      "action_type": "click_text",
+      "action_value": "追踪",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "追踪当前委托目标"
+    },
+    {
+      "id": "step_close_adventure_book",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "esc",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "关闭冒险之证"
+    },
+    {
+      "id": "step_open_map",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "m",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "打开地图"
+    },
+    {
+      "id": "step_teleport",
+      "condition_type": "text",
+      "condition_value": "传送",
+      "action_type": "click_text",
+      "action_value": "传送",
+      "duration": 0.5,
+      "delay": 3.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "点击最近传送点",
+      "on_error": "continue"
+    },
+    {
+      "id": "step_wait_loading",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "4.0",
+      "duration": 4.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "等待传送加载完成"
+    },
+    {
+      "id": "step_move_forward",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "w",
+      "duration": 3.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "向前移动靠近目标"
+    },
+    {
+      "id": "step_sprint",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "key_hold",
+      "action_value": "shift+w",
+      "duration": 2.0,
+      "delay": 0.3,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "冲刺加速移动"
+    },
+    {
+      "id": "step_detect_battle",
+      "condition_type": "text",
+      "condition_value": "挑战",
+      "action_type": "press_key",
+      "action_value": "f",
+      "duration": 0.2,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "检测到挑战目标，按F互动",
+      "on_error": "continue"
+    },
+    {
+      "id": "step_auto_battle_skill",
+      "condition_type": "text",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "e",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 3,
+      "enabled": true,
+      "verify_text": "",
+      "description": "释放元素战技（循环3次）"
+    },
+    {
+      "id": "step_auto_battle_burst",
+      "condition_type": "text",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "q",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 2,
+      "enabled": true,
+      "verify_text": "",
+      "description": "释放元素爆发（循环2次）"
+    },
+    {
+      "id": "step_auto_attack",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "mouse_click",
+      "action_value": "left",
+      "duration": 0.1,
+      "delay": 0.15,
+      "count": 8,
+      "enabled": true,
+      "verify_text": "",
+      "description": "普通攻击连点"
+    },
+    {
+      "id": "step_switch_char",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "2",
+      "duration": 0.2,
+      "delay": 0.8,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "切换角色触发元素反应"
+    },
+    {
+      "id": "step_detect_complete",
+      "condition_type": "text",
+      "condition_value": "完成",
+      "action_type": "press_key",
+      "action_value": "f",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "奖励",
+      "description": "检测任务完成，按F确认"
+    },
+    {
+      "id": "step_claim_completion",
+      "condition_type": "text",
+      "condition_value": "奖励",
+      "action_type": "click_text",
+      "action_value": "领取",
+      "duration": 0.3,
+      "delay": 1.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "领取委托完成奖励"
+    },
+    {
+      "id": "step_check_next",
+      "condition_type": "text",
+      "condition_value": "再次挑战",
+      "action_type": "press_key",
+      "action_value": "esc",
+      "duration": 0.2,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "检查是否需继续，否则退出"
+    },
+    {
+      "id": "step_collect_loot",
+      "condition_type": "text",
+      "condition_value": "拾取",
+      "action_type": "press_key",
+      "action_value": "f",
+      "duration": 0.2,
+      "delay": 0.3,
+      "count": 3,
+      "enabled": true,
+      "verify_text": "",
+      "description": "连续拾取掉落物",
+      "on_error": "continue"
+    },
+    {
+      "id": "step_wait_round_end",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "3.0",
+      "duration": 3.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "轮次间隔等待"
+    }
+  ],
+  "nodes": {
+    "start": {
+      "node_type": "start",
+      "config": {},
+      "next_nodes": ["wait_init"]
+    },
+    "wait_init": {
+      "node_type": "wait",
+      "config": {"duration": 2.0},
+      "next_nodes": ["open_book"]
+    },
+    "open_book": {
+      "node_type": "key_press",
+      "config": {"key": "f1", "duration": 0.2, "delay": 1.0},
+      "next_nodes": ["claim_reward"]
+    },
+    "claim_reward": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "领取奖励", "timeout": 3},
+      "next_nodes": ["track_mission"]
+    },
+    "track_mission": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "追踪", "timeout": 3},
+      "next_nodes": ["close_menu"]
+    },
+    "close_menu": {
+      "node_type": "key_press",
+      "config": {"key": "esc", "delay": 1.0},
+      "next_nodes": ["open_map"]
+    },
+    "open_map": {
+      "node_type": "key_press",
+      "config": {"key": "m"},
+      "next_nodes": ["click_teleport"]
+    },
+    "click_teleport": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "传送", "timeout": 5, "on_error": "continue"},
+      "next_nodes": ["wait_loading"]
+    },
+    "wait_loading": {
+      "node_type": "wait",
+      "config": {"duration": 4.0},
+      "next_nodes": ["move_to_target"]
+    },
+    "move_to_target": {
+      "node_type": "key_press",
+      "config": {"key": "w", "duration": 3.0},
+      "next_nodes": ["sprint"]
+    },
+    "sprint": {
+      "node_type": "key_hold",
+      "config": {"keys": ["shift", "w"], "duration": 2.0},
+      "next_nodes": ["detect_battle"]
+    },
+    "detect_battle": {
+      "node_type": "ocr_detect",
+      "config": {"target_text": "挑战", "on_found": "interact", "on_not_found": "continue"},
+      "next_nodes": ["battle_sequence"]
+    },
+    "battle_sequence": {
+      "node_type": "sequence",
+      "config": {"loop": 3},
+      "next_nodes": ["detect_complete"]
+    },
+    "detect_complete": {
+      "node_type": "ocr_detect",
+      "config": {"target_text": "完成", "timeout": 30, "on_found": "claim", "on_not_found": "battle_sequence"},
+      "next_nodes": ["claim_completion"]
+    },
+    "claim_completion": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "领取", "timeout": 3},
+      "next_nodes": ["loop_check"]
+    },
+    "loop_check": {
+      "node_type": "condition",
+      "config": {
+        "condition": "vars.get('loop_count', 0) < vars.get('max_loops', 4)",
+        "true_branch": "wait_round",
+        "false_branch": "end"
+      },
+      "next_nodes": ["wait_round", "end"]
+    },
+    "wait_round": {
+      "node_type": "wait",
+      "config": {"duration": 3.0},
+      "next_nodes": ["open_book"]
+    },
+    "end": {
+      "node_type": "end",
+      "config": {},
+      "next_nodes": []
+    }
+  }
+}

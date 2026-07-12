@@ -1,0 +1,374 @@
+{
+  "name": "绝区零日常刷取",
+  "description": "自动完成绝区零日常流程：领取每日→VR训练→刷取材料→退出。需在录像店界面启动。",
+  "mode": "step",
+  "max_runs": 3,
+  "round_interval": 2,
+  "chain": true,
+  "steps": [
+    {
+      "id": "step_wait_init",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "2.0",
+      "duration": 2.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "等待游戏界面加载"
+    },
+    {
+      "id": "step_open_daily_menu",
+      "condition_type": "text",
+      "condition_value": "每日",
+      "action_type": "press_key",
+      "action_value": "f1",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "每日任务",
+      "description": "打开每日界面",
+      "on_error": "retry",
+      "max_retries": 2
+    },
+    {
+      "id": "step_claim_daily",
+      "condition_type": "text",
+      "condition_value": "领取",
+      "action_type": "click_text",
+      "action_value": "领取",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "领取每日奖励"
+    },
+    {
+      "id": "step_claim_all_daily",
+      "condition_type": "text",
+      "condition_value": "一键领取",
+      "action_type": "click_text",
+      "action_value": "一键领取",
+      "duration": 0.3,
+      "delay": 1.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "一键领取所有可领取的每日奖励"
+    },
+    {
+      "id": "step_close_daily",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "esc",
+      "duration": 0.2,
+      "delay": 0.8,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "关闭每日界面"
+    },
+    {
+      "id": "step_navigate_vr",
+      "condition_type": "text",
+      "condition_value": "VR",
+      "action_type": "click_text",
+      "action_value": "VR训练",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "开始挑战",
+      "description": "进入VR训练设施"
+    },
+    {
+      "id": "step_select_material_stage",
+      "condition_type": "text",
+      "condition_value": "材料",
+      "action_type": "click_text",
+      "action_value": "材料",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "开始挑战",
+      "description": "选择材料刷取关卡"
+    },
+    {
+      "id": "step_start_challenge",
+      "condition_type": "text",
+      "condition_value": "开始挑战",
+      "action_type": "click_text",
+      "action_value": "开始挑战",
+      "duration": 0.3,
+      "delay": 2.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "开始副本挑战"
+    },
+    {
+      "id": "step_wait_load",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "3.0",
+      "duration": 3.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "等待关卡加载"
+    },
+    {
+      "id": "step_basic_attack",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "mouse_click",
+      "action_value": "left",
+      "duration": 0.1,
+      "delay": 0.1,
+      "count": 12,
+      "enabled": true,
+      "verify_text": "",
+      "description": "基础攻击连段"
+    },
+    {
+      "id": "step_special_skill",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "e",
+      "duration": 0.3,
+      "delay": 0.8,
+      "count": 4,
+      "enabled": true,
+      "verify_text": "",
+      "description": "释放特殊技"
+    },
+    {
+      "id": "step_switch_agent",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "space",
+      "duration": 0.3,
+      "delay": 0.8,
+      "count": 3,
+      "enabled": true,
+      "verify_text": "",
+      "description": "切换代理人触发连携"
+    },
+    {
+      "id": "step_ultimate",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "q",
+      "duration": 0.5,
+      "delay": 2.0,
+      "count": 2,
+      "enabled": true,
+      "verify_text": "",
+      "description": "释放终结技"
+    },
+    {
+      "id": "step_dodge",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "press_key",
+      "action_value": "shift",
+      "duration": 0.2,
+      "delay": 0.5,
+      "count": 4,
+      "enabled": true,
+      "verify_text": "",
+      "description": "闪避攻击"
+    },
+    {
+      "id": "step_detect_clear",
+      "condition_type": "text",
+      "condition_value": "通关",
+      "action_type": "press_key",
+      "action_value": "f",
+      "duration": 0.2,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "确认",
+      "description": "检测通关标志，确认退出"
+    },
+    {
+      "id": "step_confirm_exit",
+      "condition_type": "text",
+      "condition_value": "确认",
+      "action_type": "click_text",
+      "action_value": "确认",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "确认退出结算界面"
+    },
+    {
+      "id": "step_collect_rewards",
+      "condition_type": "text",
+      "condition_value": "领取",
+      "action_type": "click_text",
+      "action_value": "领取",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "领取通关奖励"
+    },
+    {
+      "id": "step_check_repeat",
+      "condition_type": "text",
+      "condition_value": "再次挑战",
+      "action_type": "click_text",
+      "action_value": "再次挑战",
+      "duration": 0.3,
+      "delay": 2.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "再次挑战（如有体力）",
+      "on_error": "continue"
+    },
+    {
+      "id": "step_exit_vr",
+      "condition_type": "text",
+      "condition_value": "退出",
+      "action_type": "click_text",
+      "action_value": "退出",
+      "duration": 0.3,
+      "delay": 1.0,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "退出VR训练界面"
+    },
+    {
+      "id": "step_wait_round",
+      "condition_type": "none",
+      "condition_value": "",
+      "action_type": "wait",
+      "action_value": "2.0",
+      "duration": 2.0,
+      "delay": 0.5,
+      "count": 1,
+      "enabled": true,
+      "verify_text": "",
+      "description": "轮次间隔等待"
+    }
+  ],
+  "nodes": {
+    "start": {
+      "node_type": "start",
+      "config": {},
+      "next_nodes": ["wait_init"]
+    },
+    "wait_init": {
+      "node_type": "wait",
+      "config": {"duration": 2.0},
+      "next_nodes": ["open_daily"]
+    },
+    "open_daily": {
+      "node_type": "key_press",
+      "config": {"key": "f1", "delay": 1.0},
+      "next_nodes": ["claim_daily"]
+    },
+    "claim_daily": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "领取", "timeout": 3},
+      "next_nodes": ["claim_all"]
+    },
+    "claim_all": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "一键领取", "timeout": 3, "on_error": "continue"},
+      "next_nodes": ["close_daily"]
+    },
+    "close_daily": {
+      "node_type": "key_press",
+      "config": {"key": "esc", "delay": 0.8},
+      "next_nodes": ["navigate_vr"]
+    },
+    "navigate_vr": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "VR训练", "timeout": 5},
+      "next_nodes": ["select_stage"]
+    },
+    "select_stage": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "材料", "timeout": 5},
+      "next_nodes": ["start_challenge"]
+    },
+    "start_challenge": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "开始挑战", "timeout": 5},
+      "next_nodes": ["wait_load"]
+    },
+    "wait_load": {
+      "node_type": "wait",
+      "config": {"duration": 3.0},
+      "next_nodes": ["battle_sequence"]
+    },
+    "battle_sequence": {
+      "node_type": "sequence",
+      "config": {"loop": 4},
+      "next_nodes": ["detect_clear"]
+    },
+    "detect_clear": {
+      "node_type": "ocr_detect",
+      "config": {"target_text": "通关", "timeout": 60, "on_found": "confirm", "on_not_found": "battle_sequence"},
+      "next_nodes": ["confirm_exit"]
+    },
+    "confirm_exit": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "确认", "timeout": 3},
+      "next_nodes": ["collect_rewards"]
+    },
+    "collect_rewards": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "领取", "timeout": 3},
+      "next_nodes": ["loop_check"]
+    },
+    "loop_check": {
+      "node_type": "condition",
+      "config": {
+        "condition": "vars.get('loop_count', 0) < vars.get('max_loops', 3)",
+        "true_branch": "retry_challenge",
+        "false_branch": "exit_vr"
+      },
+      "next_nodes": ["retry_challenge", "exit_vr"]
+    },
+    "retry_challenge": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "再次挑战", "timeout": 3, "on_error": "continue"},
+      "next_nodes": ["wait_load"]
+    },
+    "exit_vr": {
+      "node_type": "ocr_click",
+      "config": {"target_text": "退出", "timeout": 3},
+      "next_nodes": ["wait_round"]
+    },
+    "wait_round": {
+      "node_type": "wait",
+      "config": {"duration": 2.0},
+      "next_nodes": ["open_daily"]
+    },
+    "end": {
+      "node_type": "end",
+      "config": {},
+      "next_nodes": []
+    }
+  }
+}

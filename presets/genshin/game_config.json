@@ -1,0 +1,19 @@
+{
+  "name": "原神",
+  "name_en": "Genshin Impact",
+  "publisher": "miHoYo/HoYoverse",
+  "window_title": "原神",
+  "window_title_alt": "Genshin Impact",
+  "window_class": "UnityWndClass",
+  "launch_path": "",
+  "default_capture_region": {
+    "x": 0,
+    "y": 0,
+    "width": 1920,
+    "height": 1080
+  },
+  "resolution": "1920x1080",
+  "fullscreen": true,
+  "ocr_language": "chi_sim",
+  "description": "原神是一款开放世界动作RPG游戏。内置预设支持每日委托自动完成、树脂消耗等日常操作。"
+}
