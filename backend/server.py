@@ -1,9 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import uvicorn
 
 app = FastAPI(title="全能脚本 API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# 健康检查端点（Docker healthcheck 用）
+@app.get("/api/health")
+async def health():
+    return {"status": "ok"}
 
 # 注册路由
 from routes import presets, run, nodes
