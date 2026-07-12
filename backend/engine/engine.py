@@ -107,6 +107,9 @@ class ScriptEngine:
         self._game_hwnd = None  # 当前游戏窗口句柄
 
     def stop(self): self._stop_ev.set(); self.running = False
+    def pause(self): self.running = False
+    def resume(self): self.running = True
+    def is_stopped(self) -> bool: return self._stop_ev.is_set()
     def monitor(self): return dict(self._mon)
     def _sleep(self, sec): self._stop_ev.wait(timeout=sec)
 

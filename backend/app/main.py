@@ -4,6 +4,18 @@ FastAPI 应用入口
 创建应用实例、配置 CORS、注册路由、绑定生命周期事件。
 """
 
+# 确保 backend/ 目录在 sys.path 最前面
+# （与 server.py 配合：server.py 放 pos 0，project root 放 pos 1，
+#  避免项目根 ai/engine/ 遮蔽 backend/engine/）
+import sys
+import os
+_backend_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for i, p in enumerate(sys.path):
+    if p in ('', _backend_root):
+        sys.path.pop(i)
+        break
+sys.path.insert(0, _backend_root)
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

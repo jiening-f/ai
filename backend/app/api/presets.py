@@ -1,35 +1,28 @@
-"""
-预设管理 API 路由 + 执行控制
-
-- GET /api/presets?game_id={id} — 列表
-- POST /api/presets — 创建
-- GET /api/presets/{id} — 详情（含 flow_data）
-- PUT /api/presets/{id} — 更新
-- DELETE /api/presets/{id} — 删除
-- POST /api/presets/{id}/execute — 执行
-- POST /api/presets/{id}/stop — 停止
-- POST /api/presets/{id}/pause — 暂停
-- POST /api/presets/{id}/resume — 恢复
-- POST /api/presets/{id}/step — 单步
-"""
+"""预设管理 API 路由 + 执行控制"""
 
 import asyncio
 import json
 import datetime
+import threading
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
 from app.models.preset import Preset
 from app.models.execution import Execution
 from app.schemas.preset import PresetCreate, PresetUpdate, PresetOut
 from app.schemas.game import ApiResponse
 
+# ScriptEngine 从项目根目录的 engine/ 包导入
+from engine.engine import ScriptEngine
+
 router = APIRouter(tags=["预设管理"])
 
-# ── 存储运行中的 ScriptRunner 实例 ──
-_running_executions: dict[int, "ScriptRunner"] = {}  # execution_id → runner
+# ── 存储运行中的 ScriptEngine 实例 ──
 _execution_lock = asyncio.Lock()
+_running_executions: dict[int, ScriptEngine] = {}  # execution_id → engine
 
 
 # ── CRUD ───────────────────────────
@@ -137,14 +130,32 @@ async def execute_preset(preset_id: int, db: AsyncSession = Depends(get_db)):
     if not flow_data:
         return ApiResponse(success=False, error="预设没有流程数据")
 
+    # 转换为 ScriptEngine 能用的 preset 格式
+    preset_dict = _flow_to_preset(flow_data, preset.name)
+
     # 创建执行记录
-    execution = Execution(preset_id=preset_id, status="running")
+    execution = Execution(
+        preset_id=preset_id,
+        status="running",
+        started_at=datetime.datetime.utcnow(),
+    )
     db.add(execution)
     await db.flush()
     await db.refresh(execution)
 
-    # 启动引擎（后台任务）
-    asyncio.create_task(_run_flow(execution.id, flow_data, db))
+    # 启动引擎（后台线程）
+    engine = ScriptEngine()
+    engine.background_mode = False
+
+    async with _execution_lock:
+        _running_executions[execution.id] = engine
+
+    t = threading.Thread(
+        target=_bg_run,
+        args=(engine, preset_dict, execution.id, preset_id, preset.name),
+        daemon=True,
+    )
+    t.start()
 
     return ApiResponse(success=True, data={
         "execution_id": execution.id,
@@ -203,7 +214,7 @@ async def resume_execution(preset_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.post("/presets/{preset_id}/step", response_model=ApiResponse)
 async def step_execution(preset_id: int, db: AsyncSession = Depends(get_db)):
-    """单步执行"""
+    """单步执行：暂停状态下恢复执行一步"""
     stmt = select(Execution).where(
         Execution.preset_id == preset_id,
         Execution.status.in_(["running", "paused"]),
@@ -212,8 +223,9 @@ async def step_execution(preset_id: int, db: AsyncSession = Depends(get_db)):
     execution = result.scalar_one_or_none()
 
     if execution and execution.id in _running_executions:
-        await _running_executions[execution.id].step()
-        return ApiResponse(success=True, data={"message": "已执行单步"})
+        engine = _running_executions[execution.id]
+        engine.resume()  # 恢复执行
+        return ApiResponse(success=True, data={"message": "已恢复执行"})
     return ApiResponse(success=False, error="没有正在运行的执行")
 
 
@@ -228,39 +240,133 @@ def _preset_to_dict(p: Preset) -> dict:
     }
 
 
-async def _run_flow(execution_id: int, flow_data: dict, db_session_factory):
-    """后台执行脚本流程"""
-    import time
-    from engine.executor.context import ExecutionContext
-    from engine.executor.runner import ScriptRunner
-    from engine.executor.hooks import HookManager
-    from app.models.execution import Execution, ExecutionStep
-    from app.database import async_session_factory
+def _bg_run(engine, preset_dict: dict, execution_id: int,
+             preset_id: int, preset_name: str):
+    """后台线程：执行 ScriptEngine 并更新数据库
 
-    ctx = ExecutionContext(str(execution_id))
-    hooks = HookManager()
-    runner = ScriptRunner(ctx, flow_data, hooks)
+    此函数在单独线程中同步运行，通过 engine 的启停机制控制。
+    """
+    error_msg = [None]  # 用列表在线程间共享
+    status = ["stopped"]  # 默认 stopped
 
-    async with _execution_lock:
-        _running_executions[execution_id] = runner
+    def on_log(msg: str):
+        """执行日志回调 — 可用于后续写入 ExecutionStep"""
+        pass
 
-    success = False
+    def on_done():
+        """执行完成回调"""
+        nonlocal status
+        status[0] = "completed"
+
+    started = datetime.datetime.utcnow()
     try:
-        success = await runner.run()
-    finally:
-        # 更新执行记录
+        engine.run(preset_dict, chain=True, on_log=on_log, on_done=on_done)
+    except Exception as e:
+        error_msg[0] = str(e)
+        status[0] = "error"
+
+    # 检查是否被主动停止
+    if engine.is_stopped() and status[0] != "error":
+        status[0] = "stopped"
+
+    finished = datetime.datetime.utcnow()
+    duration_ms = int((finished - started).total_seconds() * 1000)
+
+    # 异步更新数据库
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    async def _update_db():
+        from app.database import async_session_factory
         async with async_session_factory() as db:
             result = await db.execute(select(Execution).where(Execution.id == execution_id))
             execution = result.scalar_one_or_none()
             if execution:
-                execution.status = (
-                    "completed" if success
-                    else "error" if ctx.status.value == "error"
-                    else "stopped"
-                )
-                execution.finished_at = datetime.datetime.utcnow()
-                execution.duration_ms = int(ctx.elapsed_ms)
+                execution.status = status[0]
+                execution.finished_at = finished
+                execution.duration_ms = duration_ms
+                if error_msg[0]:
+                    execution.error_message = error_msg[0]
                 await db.commit()
 
-        async with _execution_lock:
-            _running_executions.pop(execution_id, None)
+    loop.run_until_complete(_update_db())
+
+    # 从运行字典中移除
+    asyncio.run_coroutine_threadsafe(
+        _cleanup_execution(execution_id),
+        loop,
+    )
+
+
+async def _cleanup_execution(execution_id: int):
+    """从 _running_executions 中移除已完成的执行"""
+    async with _execution_lock:
+        _running_executions.pop(execution_id, None)
+
+
+def _flow_to_preset(flow_data: dict, name: str = "") -> dict:
+    """将 flow_data（节点流程 JSON）转换为 ScriptEngine 兼容的 preset dict
+
+    支持两种格式：
+    1. 旧预设格式：{"steps": [...], "max_runs": N, "round_interval": N, "chain": bool}
+    2. 新节点格式：{"maps": [...], "loop_enabled": bool, "max_loops": N}
+    """
+    # 如果已经是旧格式，直接使用
+    if "steps" in flow_data:
+        return {
+            "name": name,
+            "game": flow_data.get("game", "未分类"),
+            "steps": flow_data.get("steps", []),
+            "max_runs": flow_data.get("max_runs", 0),
+            "round_interval": flow_data.get("round_interval", 0),
+            "chain": flow_data.get("chain", True),
+        }
+
+    # 新节点格式 → 旧预设格式的适配转换
+    steps = []
+    for map_cfg in flow_data.get("maps", []):
+        if not map_cfg.get("enabled", True):
+            continue
+        for feature in map_cfg.get("features", []):
+            if not feature.get("enabled", True):
+                continue
+            # 将特征节点转为步骤
+            detect_type = feature.get("detect_type", "text")
+            detect_value = feature.get("detect_value", "")
+
+            step = {
+                "condition_type": "none",
+                "condition_value": "",
+                "action_type": "press_key",
+                "action_value": "space",
+                "duration": 0.2,
+                "delay": 0,
+                "count": 0,
+                "enabled": True,
+                "verify_text": "",
+            }
+
+            if detect_type == "text":
+                step["condition_type"] = "text"
+                step["condition_value"] = detect_value
+            elif detect_type == "image":
+                step["condition_type"] = "image"
+                step["condition_value"] = detect_value
+                step["action_type"] = "click_image"
+                step["action_value"] = detect_value
+
+            # on_match 和 on_mismatch 在 NodeEngine 中处理，
+            # ScriptEngine 通过 chain 参数控制是否中断
+            steps.append(step)
+
+    return {
+        "name": name,
+        "game": "未分类",
+        "steps": steps if steps else [],
+        "max_runs": flow_data.get("max_loops", 0),
+        "round_interval": 0,
+        "chain": False,  # 节点模式不链式中断
+    }
