@@ -9,6 +9,7 @@
 """
 
 from __future__ import annotations
+import asyncio
 from typing import Any, Callable, Optional
 from engine.executor.context import ExecutionContext
 from engine.nodes.base import BaseNode, NodeResult
@@ -68,10 +69,13 @@ class HookSystem:
 
         如果任一钩子返回 NodeResult，则跳过节点实际执行，
         直接使用该结果。返回 None 表示正常执行。
+        使用 asyncio.iscoroutine() 标准方式检测异步回调。
         """
         for hook in self._pre_hooks:
             try:
                 result = hook(node, ctx)
+                if asyncio.iscoroutine(result):
+                    result = await result
                 if result is not None:
                     return result
             except Exception as e:
@@ -81,10 +85,15 @@ class HookSystem:
     async def run_post_hooks(
         self, node: BaseNode, ctx: ExecutionContext, result: NodeResult
     ):
-        """执行所有 post_execute 钩子"""
+        """执行所有 post_execute 钩子
+
+        使用 asyncio.iscoroutine() 标准方式检测异步回调。
+        """
         for hook in self._post_hooks:
             try:
-                hook(node, ctx, result)
+                ret = hook(node, ctx, result)
+                if asyncio.iscoroutine(ret):
+                    await ret
             except Exception as e:
                 ctx.warn(f"post_hook 异常: {e}", node.node_id)
 
@@ -102,10 +111,10 @@ def create_logging_hooks(on_log: Callable[[str], None] = print):
         ctx.info(f"执行 [{node.node_type}] {node.node_id}", node.node_id)
 
     def post_log(node: BaseNode, ctx: ExecutionContext, result: NodeResult):
-        status = "OK" if result.status.value == "success" else "FAIL"
-        msg = f"[{status}] [{node.node_type}] {node.node_id} -> {result.status.value}"
-        if result.error:
-            msg += f" ({result.error})"
+        status = "OK" if result.success else "FAIL"
+        msg = f"[{status}] [{node.node_type}] {node.node_id}"
+        if result.error_message:
+            msg += f" ({result.error_message})"
         ctx.info(msg, node.node_id)
 
     pre_log.__name__ = "pre_log"
@@ -129,17 +138,17 @@ def create_anti_detect_hook(min_delay: float = 0.01, max_delay: float = 0.08):
 
 
 def create_performance_hooks():
-    """创建性能监控钩子"""
+    """创建性能监控钩子（使用 perf_counter 避免系统时钟调整影响）"""
     import time
 
     _timers: dict[str, float] = {}
 
     def pre_perf(node: BaseNode, ctx: ExecutionContext):
-        _timers[node.node_id] = time.time()
+        _timers[node.node_id] = time.perf_counter()
 
     def post_perf(node: BaseNode, ctx: ExecutionContext, result: NodeResult):
         if node.node_id in _timers:
-            elapsed = (time.time() - _timers[node.node_id]) * 1000
+            elapsed = (time.perf_counter() - _timers[node.node_id]) * 1000
             ctx.info(f"耗时 {elapsed:.1f}ms", node.node_id,
                      data={"elapsed_ms": elapsed})
             del _timers[node.node_id]

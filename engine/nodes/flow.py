@@ -137,6 +137,35 @@ class ConditionNode(BaseNode):
         }
 
 
+class LogNode(BaseNode):
+    """日志节点：在上下文中记录一条日志消息"""
+
+    node_type = "log"
+
+    async def execute(self, ctx: ExecutionContext) -> NodeResult:
+        message = self.config.get("message", "")
+        level = self.config.get("level", "INFO")
+        ctx.log(level, message, node_id=self.node_id)
+        return NodeResult(success=True)
+
+    @classmethod
+    def default_config(cls) -> dict:
+        return {"message": "", "level": "INFO"}
+
+    @classmethod
+    def description(cls) -> dict:
+        return {
+            "type": cls.node_type,
+            "name": "日志",
+            "category": "流程控制",
+            "description": "在上下文中记录一条日志消息",
+            "config_schema": {
+                "message": {"type": "string", "default": "", "description": "日志消息"},
+                "level": {"type": "string", "default": "INFO", "description": "日志级别"},
+            },
+        }
+
+
 class LoopNode(BaseNode):
     """
     循环节点

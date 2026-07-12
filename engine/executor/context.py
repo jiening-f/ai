@@ -60,8 +60,27 @@ class ExecutionContext:
 
     # ── 日志收集 ──
 
-    def log(self, level: str, message: str,
+    def log(self, level_or_message: str, message: str = "",
             node_id: str = "", data: Any = None) -> dict:
+        """记录日志条目
+
+        支持两种调用方式:
+        - log("INFO", "message", node_id="n1")  → 完整调用
+        - log("message") 或 log("开始", "脚本开始执行")  → 节点简化调用
+        """
+        # 兼容节点简化调用: log(message) 或 log(level, message)
+        if message == "" and node_id == "" and data is None:
+            # log("message") — 单参数调用
+            level = "INFO"
+            message = level_or_message
+        elif message == "" and data is None:
+            # log(level, message) — 两参数调用（无 node_id）
+            level = level_or_message
+            message = node_id
+            node_id = ""
+        else:
+            level = level_or_message
+
         entry = {
             "timestamp": time.time(),
             "level": level,
@@ -92,14 +111,15 @@ class ExecutionContext:
     @property
     def stats(self) -> dict:
         d = dict(self._stats)
-        if self._stats["start_time"]:
+        if self._stats["_start_perf"]:
             d["elapsed_ms"] = int(
-                (time.time() - self._stats["start_time"]) * 1000
+                (time.perf_counter() - self._stats["_start_perf"]) * 1000
             )
         return d
 
     def mark_start(self):
-        self._stats["start_time"] = time.time()
+        self._stats["start_time"] = time.time()       # 日志用 wall-clock 时间戳
+        self._stats["_start_perf"] = time.perf_counter()  # 性能用 monotonic 时钟
         self._stats["executed_count"] = 0
         self._stats["success_count"] = 0
         self._stats["failed_count"] = 0

@@ -3,10 +3,17 @@
 状态机: idle → running → paused/stopped/completed/error
 支持:
 - 异步执行循环（从 start 节点开始，按图遍历）
-- 条件分支（condition 节点）
-- 循环（loop 节点）
+- 条件分支（condition 节点通过 next_node_id 控制）
+- 循环（loop 节点通过 next_node_id 跳转）
 - 暂停/恢复/停止/单步调试
 - 错误处理（on_error: stop/continue/retry）
+
+审查修复 (AIX-21):
+- step() 自包含设计：首次调用自动初始化上下文和启动执行循环
+- retry_count <= 0 守卫：无意义重试配置回退为 stop 策略
+- asyncio.Event 替代轮询：暂停/恢复零 CPU 开销
+- asyncio.iscoroutine() 替代 hasattr(__await__)：标准异步检测
+- time.perf_counter() 替代 time.time()：性能计时不受系统时钟影响
 """
 
 from __future__ import annotations
@@ -17,7 +24,7 @@ from typing import Any, Callable, Optional
 
 from engine.executor.context import ExecutionContext
 from engine.executor.hooks import HookSystem
-from engine.nodes.base import BaseNode, NodeResult, NodeStatus
+from engine.nodes.base import BaseNode, NodeResult
 
 
 class EngineState(Enum):
@@ -67,6 +74,10 @@ class ScriptRunner:
         self._current_node_id: Optional[str] = None
         self._loop_count = 0
         self._max_loops = 0  # 0 = 无限
+
+        # asyncio.Event 替代轮询，提升暂停/恢复响应速度
+        self._pause_event = asyncio.Event()
+        self._pause_event.set()  # 初始非暂停状态
 
         # 回调
         self._on_state_change: Optional[Callable] = None
@@ -134,12 +145,14 @@ class ScriptRunner:
         """暂停执行（当前节点完成后暂停）"""
         if self._state == EngineState.RUNNING:
             self._ctx.pause()
+            self._pause_event.clear()  # 标记暂停，阻塞执行循环
             self._set_state(EngineState.PAUSED)
 
     async def resume(self):
         """从暂停恢复"""
         if self._state == EngineState.PAUSED:
             self._ctx.resume()
+            self._pause_event.set()  # 解除暂停阻塞
             self._set_state(EngineState.RUNNING)
 
     async def stop(self):
@@ -148,23 +161,52 @@ class ScriptRunner:
         self._set_state(EngineState.STOPPED)
 
     async def step(self):
-        """单步执行（执行一个节点后自动暂停）"""
-        if self._state in (EngineState.PAUSED, EngineState.IDLE):
-            self._ctx.enable_step_mode()
-            if self._state == EngineState.IDLE:
-                # 首次单步：启动执行循环
-                self._ctx.step_once()
-                self._ctx = self._ctx or ExecutionContext()
-                self._ctx.mark_start()
-                self._set_state(EngineState.RUNNING)
-                try:
-                    await self._execution_loop()
-                except Exception as e:
-                    self._ctx.error(f"引擎异常: {e}")
-                    self._set_state(EngineState.ERROR)
-            else:
-                self._ctx.step_once()
-                self._set_state(EngineState.RUNNING)
+        """单步执行（执行一个节点后自动暂停）
+
+        可独立调用，无需事先调用 run()。首次调用自动初始化上下文并启动执行循环。
+        """
+        if self._state not in (EngineState.PAUSED, EngineState.IDLE):
+            return
+
+        # 确保上下文已初始化（修复：先初始化再使用，避免空指针）
+        if self._ctx is None:
+            self._ctx = ExecutionContext()
+
+        self._ctx.enable_step_mode()
+
+        if self._state == EngineState.IDLE:
+            # 首次单步：启动执行循环
+            self._ctx.mark_start()
+            self._set_state(EngineState.RUNNING)
+            try:
+                await self._execution_loop()
+            except Exception as e:
+                self._ctx.error(f"引擎异常: {e}")
+                self._set_state(EngineState.ERROR)
+        else:
+            # 从暂停恢复，放行一个节点
+            self._ctx.step_once()
+            self._pause_event.set()  # 通知暂停循环继续
+            self._set_state(EngineState.RUNNING)
+
+    # ── 图遍历辅助 ──
+
+    @staticmethod
+    def _get_next_node(node: BaseNode, result: NodeResult) -> Optional[str]:
+        """确定下一个要执行的节点
+
+        优先级:
+        1. 结果中的 next_node_id 显式覆盖（条件分支/循环跳转）
+        2. 节点的 next_nodes 列表第一个（默认路由）
+        3. None（流程结束）
+        """
+        # 显式覆盖（条件分支/循环跳转）
+        if result.next_node_id is not None:
+            return result.next_node_id
+        # 默认路由
+        if node.next_nodes:
+            return node.next_nodes[0]
+        return None
 
     # ── 执行循环 ──
 
@@ -187,9 +229,9 @@ class ScriptRunner:
                 ctx.info(f"达到最大循环次数 {self._max_loops}，停止")
                 break
 
-            # 等待暂停恢复
-            while ctx.paused and ctx.is_active():
-                await asyncio.sleep(0.05)
+            # 等待暂停恢复（使用 Event 替代轮询，零 CPU 开销）
+            if ctx.paused and ctx.is_active():
+                await self._pause_event.wait()
 
             if not ctx.is_active():
                 break
@@ -215,21 +257,35 @@ class ScriptRunner:
                     pass
 
             # 决定下一个节点
-            next_id = node.get_next_node(result)
+            next_id = self._get_next_node(node, result)
 
             if next_id is None:
                 # 没有后续节点 → 流程结束
                 ctx.info("流程结束（无后续节点）", current_id)
                 break
 
-            if result.status == NodeStatus.FAILED:
+            if not result.success:
                 if self.on_error == "stop":
-                    ctx.error(f"节点执行失败，停止: {result.error}", current_id)
+                    ctx.error(
+                        f"节点执行失败，停止: {result.error_message}",
+                        current_id,
+                    )
                     self._set_state(EngineState.ERROR)
                     break
                 elif self.on_error == "continue":
-                    ctx.warn(f"节点执行失败，跳过: {result.error}", current_id)
-                # retry 由 _execute_node 内部处理
+                    ctx.warn(
+                        f"节点执行失败，跳过: {result.error_message}",
+                        current_id,
+                    )
+                elif self.on_error == "retry":
+                    # 重试已耗尽（_execute_node 内部已处理所有重试），视为 stop
+                    ctx.error(
+                        f"节点执行失败（重试 {self.max_retries} 次后仍失败），"
+                        f"停止: {result.error_message}",
+                        current_id,
+                    )
+                    self._set_state(EngineState.ERROR)
+                    break
 
             current_id = next_id
 
@@ -241,6 +297,15 @@ class ScriptRunner:
         self, node: BaseNode, ctx: ExecutionContext
     ) -> NodeResult:
         """执行单个节点（含钩子和重试）"""
+        # retry_count <= 0 守卫：回退为 stop 策略
+        if self.on_error == "retry" and self.max_retries <= 0:
+            ctx.warn(
+                f"on_error=retry 但 max_retries={self.max_retries}，"
+                f"回退为 stop 策略",
+                node.node_id,
+            )
+            self.on_error = "stop"
+
         retries = 0
         max_retries = self.max_retries if self.on_error == "retry" else 0
 
@@ -255,8 +320,8 @@ class ScriptRunner:
                 result = await node.execute(ctx)
             except Exception as e:
                 result = NodeResult(
-                    status=NodeStatus.FAILED,
-                    error=str(e),
+                    success=False,
+                    error_message=str(e),
                 )
                 ctx.error(f"节点执行异常: {e}", node.node_id)
 
@@ -264,16 +329,13 @@ class ScriptRunner:
             await self.hooks.run_post_hooks(node, ctx, result)
 
             # ── 统计 ──
-            ctx.mark_executed(
-                node.node_id,
-                result.status == NodeStatus.SUCCESS,
-            )
+            ctx.mark_executed(node.node_id, result.success)
 
             # ── 重试逻辑 ──
-            if result.status == NodeStatus.FAILED and retries < max_retries:
+            if not result.success and retries < max_retries:
                 retries += 1
                 ctx.warn(
-                    f"重试 {retries}/{max_retries}: {result.error}",
+                    f"重试 {retries}/{max_retries}: {result.error_message}",
                     node.node_id,
                 )
                 await asyncio.sleep(0.3 * retries)  # 递增延迟
