@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全能脚本 — 基础操作</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ═══ 顶栏 ═══ -->
+  <header class="topbar">
+    <nav class="topbar-nav">
+      <button class="topbar-tab active" id="tab-basic">基础页</button>
+      <button class="topbar-tab" id="tab-loop">循环节点页</button>
+    </nav>
+    <div class="topbar-brand">全能脚本</div>
+    <div class="topbar-status">
+      <span class="status-dot idle"></span>
+      <span class="status-text">待命</span>
+    </div>
+  </header>
+
+  <!-- ═══ 主体 ═══ -->
+  <div class="layout" id="page-basic">
+    <!-- 左侧栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">预设列表</div>
+      <ul class="preset-list" id="preset-list">
+        <li class="preset-item empty">加载中…</li>
+      </ul>
+    </aside>
+
+    <!-- 右侧主区域 -->
+    <main class="main">
+      <!-- 预设管理卡片 -->
+      <section class="card">
+        <div class="card-header">预设管理</div>
+        <div class="preset-row">
+          <label class="field">
+            <span class="field-label">预设</span>
+            <select id="preset-select" class="select">
+              <option value="">— 选择预设 —</option>
+            </select>
+          </label>
+          <div class="btn-row">
+            <button id="btn-load" class="btn btn-outline">加载</button>
+            <button id="btn-save" class="btn btn-outline">保存</button>
+            <button id="btn-delete" class="btn btn-outline btn-danger">删除</button>
+          </div>
+        </div>
+        <div class="preset-row">
+          <label class="field field-sm">
+            <span class="field-label">轮次</span>
+            <input type="number" id="max-runs" class="input input-sm" value="0" min="0">
+            <span class="field-hint">0=无限</span>
+          </label>
+          <label class="field field-sm">
+            <span class="field-label">间隔</span>
+            <input type="number" id="round-interval" class="input input-sm" value="0" min="0" step="0.1">
+            <span class="field-hint">s</span>
+          </label>
+          <div class="btn-row">
+            <button id="btn-run" class="btn btn-primary">▶ 运行</button>
+            <button id="btn-stop" class="btn btn-stop">■ 停止</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 步骤列表卡片 -->
+      <section class="card">
+        <div class="card-header">
+          <span>步骤列表</span>
+          <div class="btn-row">
+            <button id="btn-add" class="btn btn-sm btn-outline">添加</button>
+            <button id="btn-del-step" class="btn btn-sm btn-outline">删除</button>
+            <button id="btn-up" class="btn btn-sm btn-outline">↑ 上移</button>
+            <button id="btn-down" class="btn btn-sm btn-outline">↓ 下移</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="steps-table">
+            <thead>
+              <tr><th>次数</th><th>条件</th><th>命令</th><th>时长</th><th>延迟</th></tr>
+            </thead>
+            <tbody id="step-tbody">
+              <tr><td colspan="5" class="empty-row">暂无步骤，点击"添加"创建</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 执行日志卡片 -->
+      <section class="card">
+        <div class="card-header">
+          <span>执行日志</span>
+          <button id="btn-clear-log" class="btn btn-sm btn-outline">清空</button>
+        </div>
+        <div class="log-area" id="log-area">
+          <div class="log-line">就绪 — 等待操作</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══ 循环节点页（占位）═══ -->
+  <div class="layout" id="page-loop" style="display:none">
+    <main class="main" style="flex:1; display:flex; align-items:center; justify-content:center;">
+      <div style="text-align:center; color:var(--text-secondary);">
+        <div style="font-size:48px; margin-bottom:16px;">🔄</div>
+        <div style="font-size:18px; font-weight:600; margin-bottom:8px;">循环节点页</div>
+        <div style="font-size:14px;">开发中，敬请期待</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══ 步骤编辑模态框 ═══ -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span id="modal-title">编辑步骤</span>
+        <button class="modal-close" id="modal-cancel">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Dynamic content -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="modal-cancel2">取消</button>
+        <button class="btn btn-primary" id="modal-confirm">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Toast ═══ -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

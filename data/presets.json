@@ -1,0 +1,364 @@
+[
+  {
+    "name": "测试",
+    "game": "二重螺旋",
+    "steps": [
+      {
+        "condition_type": "text",
+        "condition_value": "开启第一试炼",
+        "action_type": "press_key",
+        "action_value": "d",
+        "duration": 1.0,
+        "delay": 0.3,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      }
+    ],
+    "max_runs": 0,
+    "round_interval": 0,
+    "chain": true
+  },
+  {
+    "name": "书本测试",
+    "game": "二重螺旋",
+    "steps": [
+      {
+        "condition_type": "image",
+        "condition_value": "绿书",
+        "action_type": "click_image",
+        "action_value": "绿书",
+        "duration": 0.2,
+        "delay": 0.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "紫书",
+        "action_type": "click_image",
+        "action_value": "紫书",
+        "duration": 0.2,
+        "delay": 0.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "蓝书",
+        "action_type": "click_image",
+        "action_value": "蓝书",
+        "duration": 0.2,
+        "delay": 0.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "金书",
+        "action_type": "click_image",
+        "action_value": "金书",
+        "duration": 0.2,
+        "delay": 0.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "绿书",
+        "action_type": "click_near_image",
+        "action_value": "紫书",
+        "duration": 0.2,
+        "delay": 0.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      }
+    ],
+    "max_runs": 0,
+    "round_interval": 3,
+    "chain": true
+  },
+  {
+    "name": "全面测试",
+    "game": "二重螺旋",
+    "steps": [
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "r",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "space",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "text",
+        "condition_value": "开始挑战",
+        "action_type": "press_key",
+        "action_value": "r",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "text",
+        "condition_value": "再次挑战",
+        "action_type": "press_key",
+        "action_value": "space",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "紫书",
+        "action_type": "click_image",
+        "action_value": "紫书",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "绿书",
+        "action_type": "click_image",
+        "action_value": "绿书",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "蓝书",
+        "action_type": "click_image",
+        "action_value": "蓝书",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "金书",
+        "action_type": "click_image",
+        "action_value": "金书",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "w",
+        "duration": 1.0,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "text",
+        "condition_value": "确认",
+        "action_type": "press_key",
+        "action_value": "w",
+        "duration": 1.0,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      }
+    ],
+    "max_runs": 0,
+    "round_interval": 0,
+    "chain": true
+  },
+  {
+    "name": "书籍循环",
+    "game": "二重螺旋",
+    "steps": [
+      {
+        "condition_type": "text",
+        "condition_value": "再次挑战",
+        "action_type": "press_key",
+        "action_value": "r",
+        "duration": 0.2,
+        "delay": 0.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "绿书",
+        "action_type": "click_near_image",
+        "action_value": "0,-60,绿书",
+        "duration": 0.2,
+        "delay": 0.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "text",
+        "condition_value": "开始挑战",
+        "action_type": "press_key",
+        "action_value": "space",
+        "duration": 0.2,
+        "delay": 0.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      }
+    ],
+    "max_runs": 0,
+    "round_interval": 3,
+    "chain": true
+  },
+  {
+    "name": "r重复",
+    "game": "二重螺旋",
+    "steps": [
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "r",
+        "duration": 0.2,
+        "delay": 0.5,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "space",
+        "duration": 0.2,
+        "delay": 0.5,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "w",
+        "duration": 1.5,
+        "delay": 0.5,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      }
+    ],
+    "max_runs": 0,
+    "round_interval": 3,
+    "chain": true
+  },
+  {
+    "name": "戏剧",
+    "game": "二重螺旋",
+    "steps": [
+      {
+        "condition_type": "text",
+        "condition_value": "开启第一试炼",
+        "action_type": "press_key",
+        "action_value": "space",
+        "duration": 0.3,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "d",
+        "duration": 1.0,
+        "delay": 0.5,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "W",
+        "duration": 1.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "F",
+        "duration": 0.2,
+        "delay": 0.4,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "none",
+        "condition_value": "",
+        "action_type": "press_key",
+        "action_value": "Q",
+        "duration": 0.2,
+        "delay": 0.3,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      },
+      {
+        "condition_type": "image",
+        "condition_value": "前往",
+        "action_type": "click_image",
+        "action_value": "前往",
+        "duration": 0.2,
+        "delay": 1.0,
+        "count": 0,
+        "enabled": true,
+        "verify_text": ""
+      }
+    ],
+    "max_runs": 0,
+    "round_interval": 0,
+    "chain": true
+  }
+]

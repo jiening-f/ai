@@ -1,0 +1,49 @@
+{
+  "maps": [
+    {
+      "id": "map_1",
+      "name": "第一关地图A",
+      "enabled": true,
+      "features": [
+        {
+          "id": "f1",
+          "map_id": "map_1",
+          "detect_type": "text",
+          "detect_value": "BUFF_A",
+          "on_match": "continue",
+          "on_mismatch": "restart",
+          "enabled": true
+        },
+        {
+          "id": "f2",
+          "map_id": "map_1",
+          "detect_type": "image",
+          "detect_value": "宝箱图标",
+          "on_match": "continue",
+          "on_mismatch": "continue",
+          "enabled": true
+        },
+        {
+          "id": "f3",
+          "map_id": "map_1",
+          "detect_type": "text",
+          "detect_value": "陷阱",
+          "on_match": "restart",
+          "on_mismatch": "continue",
+          "enabled": true
+        },
+        {
+          "id": "f4",
+          "map_id": "map_1",
+          "detect_type": "image",
+          "detect_value": "传送门",
+          "on_match": "continue",
+          "on_mismatch": "continue",
+          "enabled": true
+        }
+      ]
+    }
+  ],
+  "loop_enabled": true,
+  "max_loops": 0
+}
