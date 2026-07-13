@@ -1,6 +1,9 @@
 """全能脚本 API 入口 — 端口 8765"""
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 import uvicorn
 
@@ -42,6 +45,33 @@ from routes import presets as legacy_presets, run, nodes
 app.include_router(legacy_presets.router, prefix="/api/legacy")
 app.include_router(run.router, prefix="/api")
 app.include_router(nodes.router, prefix="/api")
+
+
+# ── 前端静态文件服务 ──
+_frontend_dist = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist")
+if os.path.isdir(_frontend_dist):
+    # 挂载静态资源目录（JS/CSS/图片等）
+    _assets_dir = os.path.join(_frontend_dist, "assets")
+    if os.path.isdir(_assets_dir):
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="frontend_assets")
+
+    # 根路径显式路由
+    @app.get("/")
+    async def serve_root():
+        """首页"""
+        return FileResponse(os.path.join(_frontend_dist, "index.html"))
+
+    # SPA 回退路由：所有非 API 路径返回 index.html
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """非 API 路由回退到前端 SPA"""
+        file_path = os.path.join(_frontend_dist, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        index_path = os.path.join(_frontend_dist, "index.html")
+        if os.path.isfile(index_path):
+            return FileResponse(index_path)
+        raise HTTPException(status_code=404, detail="Not Found")
 
 
 if __name__ == "__main__":
