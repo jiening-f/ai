@@ -29,6 +29,7 @@ from app.api.executions import router as executions_router
 from app.api.plugins import router as plugins_router
 from app.api.settings import router as settings_router
 from app.api.websocket import router as ws_router
+from app.api.logs import router as logs_router
 
 app.include_router(games_router, prefix="/api")
 app.include_router(presets_router, prefix="/api")
@@ -36,6 +37,7 @@ app.include_router(executions_router, prefix="/api")
 app.include_router(plugins_router, prefix="/api")
 app.include_router(settings_router, prefix="/api")
 app.include_router(ws_router)
+app.include_router(logs_router, prefix="/api")
 
 # ── Stage 1: 旧版文件路由（兼容，挂载到 /api/legacy 避免冲突）──
 from routes import presets as legacy_presets, run, nodes

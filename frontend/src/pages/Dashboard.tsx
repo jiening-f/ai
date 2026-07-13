@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { executionsApi, Execution } from '../api/executions'
 import { useToast } from '../components/ui/Toast'
+import { useSSE } from '../hooks/useSSE'
 
 const statusBadge: Record<string, string> = {
   running: 'badge-running',
@@ -17,6 +18,47 @@ function Dashboard() {
   const [recentExecutions, setRecentExecutions] = useState<Execution[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // 实时日志流
+  const [logLines, setLogLines] = useState<string[]>([])
+  const [logConnected, setLogConnected] = useState(false)
+  const [logPaused, setLogPaused] = useState(false)
+  const logEndRef = useRef<HTMLDivElement>(null)
+  const { connected: sseConnected, on } = useSSE('/api/logs/stream')
+
+  useEffect(() => {
+    setLogConnected(sseConnected)
+  }, [sseConnected])
+
+  useEffect(() => {
+    // 监听初始日志数据
+    const unsubInit = on('init', (data: unknown) => {
+      const d = data as { lines?: string[] }
+      if (d.lines) {
+        setLogLines(d.lines)
+      }
+    })
+    // 监听实时日志行
+    const unsubMsg = on('message', (data: unknown) => {
+      if (!logPaused) {
+        const d = data as { line?: string }
+        if (d.line) {
+          setLogLines((prev) => [...prev.slice(-200), d.line!])
+        }
+      }
+    })
+    return () => {
+      unsubInit()
+      unsubMsg()
+    }
+  }, [on, logPaused])
+
+  // 自动滚动到底部
+  useEffect(() => {
+    if (!logPaused) {
+      logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [logLines, logPaused])
 
   const statsCards = [
     { title: '预设总数', value: '0', desc: '所有游戏' },
@@ -137,6 +179,57 @@ function Dashboard() {
             </table>
           </div>
         )}
+      </div>
+
+      {/* 实时日志流 */}
+      <div className="section">
+        <div className="section-header">
+          <h2>实时日志</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <span className={`badge ${logConnected ? 'badge-completed' : 'badge-error'}`}>
+              {logConnected ? '已连接' : '未连接'}
+            </span>
+            <button
+              className="btn btn-sm"
+              onClick={() => setLogPaused(!logPaused)}
+            >
+              {logPaused ? '▶ 继续' : '⏸ 暂停'}
+            </button>
+            <button
+              className="btn btn-sm"
+              onClick={() => setLogLines([])}
+            >
+              🗑 清空
+            </button>
+          </div>
+        </div>
+        <div
+          style={{
+            background: '#0a0a1a',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-md)',
+            maxHeight: 300,
+            overflowY: 'auto',
+            fontFamily: '"Cascadia Code", "Fira Code", "JetBrains Mono", monospace',
+            fontSize: 12,
+            lineHeight: 1.6,
+            color: '#a5b4fc',
+          }}
+        >
+          {logLines.length === 0 ? (
+            <div style={{ color: 'var(--text-tertiary)', textAlign: 'center', padding: 'var(--space-lg)' }}>
+              {logConnected ? '等待日志...' : '正在连接日志服务...'}
+            </div>
+          ) : (
+            logLines.map((line, i) => (
+              <div key={i} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                {line}
+              </div>
+            ))
+          )}
+          <div ref={logEndRef} />
+        </div>
       </div>
     </div>
   )

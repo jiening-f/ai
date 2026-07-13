@@ -1,4 +1,9 @@
-"""WebSocket 端点 — 实时推送执行状态和步骤日志"""
+"""WebSocket 端点 — 实时推送执行状态和步骤日志
+
+连接建立时自动推送当前已有数据，之后通过 EventBridge 实时接收引擎推送的事件。
+客户端可发送 "ping" 收到 "pong"。
+"""
+import asyncio
 from datetime import datetime
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -6,11 +11,9 @@ from sqlalchemy import select
 
 from app.db import AsyncSessionLocal
 from database.models import Execution, ExecutionStep
+from app.api.events import event_bridge
 
 router = APIRouter()
-
-# {execution_id: [WebSocket, ...]}
-_connections: dict[int, list[WebSocket]] = {}
 
 
 def _status_msg(ex: Execution) -> dict:
@@ -42,15 +45,29 @@ def _step_msg(step: ExecutionStep) -> dict:
     }
 
 
+def _build_event(event_type: str, data: dict) -> dict:
+    """构建标准事件消息"""
+    return {"type": event_type, "data": {**data, "timestamp": datetime.now().isoformat()}}
+
+
 @router.websocket("/api/ws/execution/{execution_id}")
 async def ws_execution(websocket: WebSocket, execution_id: int):
     """WebSocket: 实时推送执行状态和步骤日志
 
     连接建立时自动推送当前已有数据。
+    之后通过 EventBridge 实时接收引擎推送事件并转发。
     客户端可发送 "ping" 收到 "pong"。
     """
     await websocket.accept()
 
+    # 注册事件循环（首次连接时）
+    try:
+        loop = asyncio.get_running_loop()
+        event_bridge.set_loop(loop)
+    except RuntimeError:
+        pass
+
+    # 发送当前已有数据
     async with AsyncSessionLocal() as db:
         result = await db.execute(select(Execution).where(Execution.id == execution_id))
         ex = result.scalar_one_or_none()
@@ -64,7 +81,19 @@ async def ws_execution(websocket: WebSocket, execution_id: int):
             for s in step_result.scalars().all():
                 await websocket.send_json(_step_msg(s))
 
-    _connections.setdefault(execution_id, []).append(websocket)
+    # 订阅实时事件
+    eq = event_bridge.subscribe(execution_id)
+
+    async def event_pusher():
+        """后台任务：从事件桥读取事件并推送到 WebSocket"""
+        while True:
+            try:
+                event = await eq.get()
+                await websocket.send_json(event)
+            except Exception:
+                break
+
+    push_task = asyncio.create_task(event_pusher())
 
     try:
         while True:
@@ -74,8 +103,9 @@ async def ws_execution(websocket: WebSocket, execution_id: int):
     except WebSocketDisconnect:
         pass
     finally:
-        conns = _connections.get(execution_id, [])
-        if websocket in conns:
-            conns.remove(websocket)
-        if not conns:
-            _connections.pop(execution_id, None)
+        push_task.cancel()
+        try:
+            await push_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        event_bridge.unsubscribe(execution_id, eq)

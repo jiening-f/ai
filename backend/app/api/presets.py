@@ -2,6 +2,7 @@
 
 执行引擎使用 backend/engine/engine.py 的 ScriptEngine（同步线程模型）。
 通过 threading.Event 和运行状态字典实现启停控制。
+通过 EventBridge 向 WebSocket 推送实时事件。
 """
 import json, threading, sqlite3
 from datetime import datetime
@@ -17,6 +18,7 @@ from app.schemas.preset import (
     PresetCreate, PresetUpdate, PresetResponse, PresetDetailResponse,
 )
 from app.api import success, api_error, get_or_404
+from app.api.events import event_bridge
 
 router = APIRouter(prefix="/presets", tags=["Presets"])
 
@@ -126,6 +128,9 @@ async def execute_preset(preset_id: int, db: AsyncSession = Depends(get_db)):
 
     eid = execution.id  # 捕获供回调使用
 
+    # 保存当前步序用于事件推送
+    _current_step = {"idx": 0, "round": 0}
+
     # 后台执行回调 — 使用 DB_PATH 避免四层 os.path.dirname（P1#2 修复）
     def _on_done():
         try:
@@ -139,14 +144,26 @@ async def execute_preset(preset_id: int, db: AsyncSession = Depends(get_db)):
                 status = "error"
             else:
                 status = "completed"
+            error_msg = eng.monitor().get("error") or None if eng else None
             duration = int((datetime.now() - execution.started_at).total_seconds() * 1000) \
                 if execution.started_at else None
             conn.execute(
                 "UPDATE executions SET status=?, finished_at=?, duration_ms=?, error_message=? WHERE id=?",
-                (status, now_str, duration, eng.monitor().get("error") or None if eng else None, eid),
+                (status, now_str, duration, error_msg, eid),
             )
             conn.commit()
             conn.close()
+
+            # 向 WebSocket 推送最终状态
+            event_bridge.push(eid, {
+                "type": "status_change",
+                "data": {
+                    "execution_id": eid, "preset_id": preset_id,
+                    "status": status, "error_message": error_msg,
+                    "finished_at": now_str, "duration_ms": duration,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            })
         except Exception:
             pass
 
@@ -155,11 +172,50 @@ async def execute_preset(preset_id: int, db: AsyncSession = Depends(get_db)):
         eng = ScriptEngine()
         eng.running = True
         eng._stop_ev.clear()
+
+        # 更新注册的引擎引用
+        state = _running.get(preset_id)
+        if state:
+            state["engine"] = eng
+
+        def on_log(msg: str):
+            """引擎日志回调 — 推送步骤日志事件到 WebSocket"""
+            step_idx = _current_step["idx"]
+            round_num = _current_step["round"]
+            # 检测轮次分隔
+            if msg.startswith("─") or msg.startswith("第 "):
+                if "第 " in msg and "轮" in msg:
+                    _current_step["round"] = round_num + 1
+                return
+            # 检测步骤日志 [N/M] 或 OK/X/STOP
+            for prefix in ("  [", "    OK", "    X", "    !!", "STOP", "---"):
+                if msg.startswith(prefix):
+                    # 解析步骤编号
+                    if msg.startswith("  [") and "/" in msg:
+                        try:
+                            idx_str = msg.split("[")[1].split("/")[0]
+                            _current_step["idx"] = int(idx_str)
+                        except ValueError:
+                            pass
+                    event_bridge.push(eid, {
+                        "type": "step_log",
+                        "data": {
+                            "execution_id": eid,
+                            "step_order": _current_step["idx"],
+                            "round": _current_step["round"],
+                            "node_type": "",
+                            "status": "running",
+                            "message": msg.strip(),
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                    })
+                    break
+
         try:
             eng.run(
                 {"name": preset.name, "steps": steps,
                  "max_runs": max_runs, "round_interval": round_interval, "chain": chain},
-                chain=chain, on_done=_on_done,
+                chain=chain, on_log=on_log, on_done=_on_done,
             )
         except Exception:
             pass

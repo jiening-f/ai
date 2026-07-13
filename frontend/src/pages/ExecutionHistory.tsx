@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { executionsApi, Execution, ExecutionStep } from '../api/executions'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 const statusBadge: Record<string, string> = {
   running: 'badge-running',
@@ -27,6 +28,65 @@ function ExecutionHistory() {
 
   // 删除确认
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
+
+  // ── WebSocket 实时状态 ──
+  // 找到正在运行的执行，订阅其 WebSocket
+  const runningExec = executions.find((e) => e.status === 'running')
+  const {
+    connected: wsConnected,
+    on: wsOn,
+  } = useWebSocket(
+    runningExec ? `/api/ws/execution/${runningExec.id}` : '/api/ws/execution/0',
+  )
+
+  // 跟踪当前订阅的 execution_id，避免重复订阅
+  const wsExecIdRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!runningExec || runningExec.id === wsExecIdRef.current) return
+    wsExecIdRef.current = runningExec.id
+  }, [runningExec?.id])
+
+  useEffect(() => {
+    // 监听 WebSocket 状态变更事件，自动刷新列表
+    const unsubStatus = wsOn('status_change', (msg: unknown) => {
+      const m = msg as { data?: { execution_id?: number; status?: string; finished_at?: string; duration_ms?: number; error_message?: string | null } }
+      const data = m?.data
+      if (data?.execution_id && data?.status) {
+        setExecutions((prev) =>
+          prev.map((e) =>
+            e.id === data.execution_id
+              ? {
+                  ...e,
+                  status: data.status as Execution['status'],
+                  finished_at: data.finished_at || e.finished_at,
+                  duration_ms: data.duration_ms ?? e.duration_ms,
+                  error_message: data.error_message ?? e.error_message,
+                }
+              : e,
+          ),
+        )
+        // 如果执行结束了，刷新列表
+        if (data.status === 'completed' || data.status === 'stopped' || data.status === 'error') {
+          loadExecutions()
+        }
+      }
+    })
+
+    // 监听步骤日志，更新展开的步骤详情
+    const unsubStep = wsOn('step_log', (msg: unknown) => {
+      const data = (msg as { data?: { execution_id?: number; step_order?: number; message?: string; status?: string } })?.data
+      if (data?.execution_id && expandedId === data.execution_id) {
+        // 步骤日志更新时刷新步骤列表
+        executionsApi.getSteps(data.execution_id).then(setSteps).catch(() => {})
+      }
+    })
+
+    return () => {
+      unsubStatus()
+      unsubStep()
+    }
+  }, [wsOn, expandedId])
 
   const loadExecutions = () => {
     setLoading(true)

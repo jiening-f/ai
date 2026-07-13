@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useToast } from '../components/ui/Toast'
+import { api } from '../api/client'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 interface NodeCategory {
   name: string
@@ -80,6 +82,60 @@ function FlowEditor() {
   const [selectedNode, setSelectedNode] = useState<CanvasNode | null>(null)
   const [zoom, setZoom] = useState(1)
 
+  // ── 执行状态 ──
+  const [executing, setExecuting] = useState(false)
+  const [executionId, setExecutionId] = useState<number | null>(null)
+  const [execLogs, setExecLogs] = useState<string[]>([])
+  const logEndRef = useRef<HTMLDivElement>(null)
+  const [logPaused, setLogPaused] = useState(false)
+
+  // WebSocket 实时执行反馈
+  const {
+    connected: wsConnected,
+    on: wsOn,
+  } = useWebSocket(
+    executionId ? `/api/ws/execution/${executionId}` : '/api/ws/execution/0',
+  )
+
+  useEffect(() => {
+    if (!executionId) return
+
+    const unsubStatus = wsOn('status_change', (msg: unknown) => {
+      const data = (msg as { data?: { status?: string; error_message?: string } })?.data
+      if (data?.status) {
+        if (data.status === 'completed') {
+          toast({ type: 'success', title: '执行完成' })
+          setExecuting(false)
+        } else if (data.status === 'stopped') {
+          toast({ type: 'info', title: '执行已停止' })
+          setExecuting(false)
+        } else if (data.status === 'error') {
+          toast({ type: 'error', title: '执行出错', description: data.error_message || '未知错误' })
+          setExecuting(false)
+        }
+      }
+    })
+
+    const unsubStep = wsOn('step_log', (msg: unknown) => {
+      const data = (msg as { data?: { message?: string } })?.data
+      if (data?.message && !logPaused) {
+        setExecLogs((prev) => [...prev.slice(-500), data.message!])
+      }
+    })
+
+    return () => {
+      unsubStatus()
+      unsubStep()
+    }
+  }, [wsOn, executionId, toast, logPaused])
+
+  // 自动滚动日志
+  useEffect(() => {
+    if (!logPaused) {
+      logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [execLogs, logPaused])
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     const data = e.dataTransfer.getData('text/plain')
@@ -110,8 +166,32 @@ function FlowEditor() {
     toast({ type: 'success', title: '流程已保存' })
   }
 
-  const handleExecute = () => {
-    toast({ type: 'info', title: '开始执行流程', description: `预设 #${presetId}` })
+  const handleExecute = async () => {
+    if (executing) return
+    try {
+      const res = await api.post<{ data?: { execution_id?: number } }>(`/presets/${presetId}/execute`, {})
+      const eid = res?.data?.execution_id
+      if (eid) {
+        setExecutionId(eid)
+        setExecuting(true)
+        setExecLogs([])
+        toast({ type: 'success', title: '执行已启动', description: `执行 #${eid}` })
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '请求失败'
+      toast({ type: 'error', title: '启动失败', description: msg })
+    }
+  }
+
+  const handleStop = async () => {
+    try {
+      await api.post(`/presets/${presetId}/stop`, {})
+      toast({ type: 'info', title: '停止指令已发送' })
+      setExecuting(false)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '请求失败'
+      toast({ type: 'error', title: '停止失败', description: msg })
+    }
   }
 
   const handleZoomIn = () => setZoom((z) => Math.min(z + 0.1, 2))
@@ -125,9 +205,20 @@ function FlowEditor() {
         <button className="btn btn-sm btn-primary" onClick={handleSave}>
           💾 保存
         </button>
-        <button className="btn btn-sm" onClick={handleExecute}>
-          ▶ 执行
-        </button>
+        {executing ? (
+          <>
+            <button className="btn btn-sm btn-danger" onClick={handleStop}>
+              ⏹ 停止
+            </button>
+            <span className={`badge ${wsConnected ? 'badge-completed' : 'badge-error'}`}>
+              {wsConnected ? '已连接' : '未连接'}
+            </span>
+          </>
+        ) : (
+          <button className="btn btn-sm" onClick={handleExecute}>
+            ▶ 执行
+          </button>
+        )}
         <span style={{ flex: 1 }} />
         <button className="btn btn-sm" onClick={handleZoomOut}>−</button>
         <span className="text-secondary text-small">{Math.round(zoom * 100)}%</span>
@@ -282,6 +373,55 @@ function FlowEditor() {
           )}
         </div>
       </div>
+
+      {/* 执行日志面板 */}
+      {executing && (
+        <div
+          style={{
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            background: '#0a0a1a',
+            padding: 'var(--space-md)',
+            height: 180,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+              <strong style={{ fontSize: 13 }}>📋 执行日志</strong>
+              {executionId && (
+                <span className="text-secondary text-small">执行 #{executionId}</span>
+              )}
+            </div>
+            <button className="btn btn-sm" onClick={() => setLogPaused(!logPaused)}>
+              {logPaused ? '▶ 继续' : '⏸ 暂停'}
+            </button>
+          </div>
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              fontFamily: '"Cascadia Code", "Fira Code", monospace',
+              fontSize: 11,
+              lineHeight: 1.5,
+              color: '#94a3b8',
+            }}
+          >
+            {execLogs.length === 0 ? (
+              <div style={{ color: 'var(--text-tertiary)', textAlign: 'center', padding: 'var(--space-lg)' }}>
+                等待引擎日志...
+              </div>
+            ) : (
+              execLogs.map((line, i) => (
+                <div key={i} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  {line}
+                </div>
+              ))
+            )}
+            <div ref={logEndRef} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
