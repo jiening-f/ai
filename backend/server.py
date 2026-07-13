@@ -62,11 +62,15 @@ if os.path.isdir(_frontend_dist):
         return FileResponse(os.path.join(_frontend_dist, "index.html"))
 
     # SPA 回退路由：所有非 API 路径返回 index.html
+    # 解析真实路径用于路径遍历防护
+    _frontend_dist_real = os.path.realpath(_frontend_dist)
+
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        """非 API 路由回退到前端 SPA"""
-        file_path = os.path.join(_frontend_dist, full_path)
-        if os.path.isfile(file_path):
+        """非 API 路由回退到前端 SPA，含路径遍历防护"""
+        file_path = os.path.realpath(os.path.join(_frontend_dist, full_path))
+        # 纵深防御：确保解析后的路径仍在 dist 目录内
+        if file_path.startswith(_frontend_dist_real + os.sep) and os.path.isfile(file_path):
             return FileResponse(file_path)
         index_path = os.path.join(_frontend_dist, "index.html")
         if os.path.isfile(index_path):
