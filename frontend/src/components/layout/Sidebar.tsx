@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 
 interface NavItem {
   path: string
@@ -17,6 +18,20 @@ const navItems: NavItem[] = [
 ]
 
 function Sidebar() {
+  const getInitialTheme = () => {
+    const saved = localStorage.getItem('theme')
+    if (saved === 'light' || saved === 'dark') return saved
+    return 'dark'
+  }
+  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -37,7 +52,12 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="sidebar-footer">v0.1.0</div>
+      <div className="sidebar-footer">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? '切换亮色主题' : '切换暗色主题'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+          <span>{theme === 'dark' ? '亮色主题' : '暗色主题'}</span>
+        </button>
+      </div>
     </aside>
   )
 }

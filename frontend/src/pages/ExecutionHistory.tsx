@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { executionsApi, Execution, ExecutionStep } from '../api/executions'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
+
+const PAGE_SIZE = 10
 
 const statusBadge: Record<string, string> = {
   running: 'badge-running',
@@ -13,13 +15,10 @@ const statusBadge: Record<string, string> = {
 
 function ExecutionHistory() {
   const { toast } = useToast()
-  const [executions, setExecutions] = useState<Execution[]>([])
+  const [allExecutions, setAllExecutions] = useState<Execution[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
   const [statusFilter, setStatusFilter] = useState('')
-  const pageSize = 10
 
   // 展开的行
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -30,30 +29,42 @@ function ExecutionHistory() {
 
   const loadExecutions = () => {
     setLoading(true)
-    setError(null)
     executionsApi
-      .list({ status: statusFilter || undefined, page, page_size: pageSize })
-      .then((res) => {
-        setExecutions(res.items)
-        setTotal(res.total)
-      })
-      .catch((err) => {
-        setError(err.message)
+      .list({ limit: 200 })
+      .then(setAllExecutions)
+      .catch(() => {
         // 示例数据
         const mockItems: Execution[] = [
           { id: 1, preset_id: 1, preset_name: '日常任务', game_name: '原神', status: 'completed', started_at: '2026-07-12T10:00:00Z', finished_at: '2026-07-12T10:05:30Z', duration_ms: 330000, error_message: null },
           { id: 2, preset_id: 1, preset_name: '周本刷取', game_name: '原神', status: 'error', started_at: '2026-07-12T09:30:00Z', finished_at: '2026-07-12T09:31:15Z', duration_ms: 75000, error_message: '图片匹配超时' },
           { id: 3, preset_id: 2, preset_name: '采集路线', game_name: '鸣潮', status: 'running', started_at: '2026-07-12T10:50:00Z', finished_at: null, duration_ms: null, error_message: null },
         ]
-        setExecutions(mockItems)
-        setTotal(mockItems.length)
+        setAllExecutions(mockItems)
       })
       .finally(() => setLoading(false))
   }
 
   useEffect(() => {
     loadExecutions()
-  }, [page, statusFilter])
+  }, [])
+
+  // 客户端筛选 + 分页
+  const filtered = useMemo(() => {
+    let list = allExecutions
+    if (statusFilter) {
+      list = list.filter((e) => e.status === statusFilter)
+    }
+    return list
+  }, [allExecutions, statusFilter])
+
+  const total = filtered.length
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  useEffect(() => {
+    if (currentPage !== page) setPage(currentPage)
+  }, [currentPage, page])
 
   const toggleExpand = async (execution: Execution) => {
     if (expandedId === execution.id) {
@@ -128,7 +139,7 @@ function ExecutionHistory() {
 
       {loading ? (
         <div className="loading"><div className="spinner" /> 加载中...</div>
-      ) : error && executions.length === 0 ? (
+      ) : allExecutions.length === 0 ? (
         <div className="empty-state">暂无执行记录</div>
       ) : (
         <div className="table-wrapper">
@@ -137,7 +148,6 @@ function ExecutionHistory() {
               <tr>
                 <th style={{ width: 30 }}></th>
                 <th>预设</th>
-                <th>游戏</th>
                 <th>状态</th>
                 <th>开始时间</th>
                 <th>耗时</th>
@@ -146,16 +156,14 @@ function ExecutionHistory() {
               </tr>
             </thead>
             <tbody>
-              {executions.map((exec) => (
+              {paged.map((exec) => (
                 <>
                   <tr
-                    key={exec.id}
                     className={`expandable-row${expandedId === exec.id ? ' expanded' : ''}`}
                     onClick={() => toggleExpand(exec)}
                   >
                     <td><span className="expand-icon">▶</span></td>
                     <td>{exec.preset_name || `预设 #${exec.preset_id}`}</td>
-                    <td className="text-secondary">{exec.game_name || '-'}</td>
                     <td>
                       <span className={`badge ${statusBadge[exec.status] || 'badge-neutral'}`}>
                         {exec.status === 'completed' ? '已完成' :
@@ -177,8 +185,8 @@ function ExecutionHistory() {
 
                   {/* 展开的步骤详情 */}
                   {expandedId === exec.id && (
-                    <tr key={`detail-${exec.id}`} className="expanded-content">
-                      <td colSpan={8}>
+                    <tr className="expanded-content">
+                      <td colSpan={7}>
                         <h3 style={{ marginBottom: 'var(--space-md)' }}>执行步骤</h3>
                         {steps.length === 0 ? (
                           <div className="text-tertiary">暂无步骤数据</div>
@@ -216,21 +224,21 @@ function ExecutionHistory() {
           </table>
 
           {/* 分页 */}
-          {total > pageSize && (
+          {totalPages > 1 && (
             <div className="pagination">
               <button
                 className="btn btn-sm"
-                disabled={page <= 1}
+                disabled={currentPage <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 上一页
               </button>
               <span className="pagination-info">
-                第 {page} 页，共 {Math.ceil(total / pageSize)} 页
+                第 {currentPage} 页，共 {totalPages} 页（共 {total} 条）
               </span>
               <button
                 className="btn btn-sm"
-                disabled={page >= Math.ceil(total / pageSize)}
+                disabled={currentPage >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
                 下一页

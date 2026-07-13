@@ -21,26 +21,18 @@ export interface ExecutionStep {
   status: string
   input_data: unknown
   output_data: unknown
-  started_at: string
+  started_at: string | null
   finished_at: string | null
 }
 
-export interface ExecQueryParams {
-  game_id?: number
-  preset_id?: number
-  status?: string
-  page?: number
-  page_size?: number
-}
-
 export const executionsApi = {
-  list: (params?: ExecQueryParams) => {
+  list: (params?: { preset_id?: number; limit?: number }) => {
     const query = params
       ? '?' + new URLSearchParams(
           Object.entries(params).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
         ).toString()
       : ''
-    return api.get<{ items: Execution[]; total: number }>(`/executions${query}`)
+    return api.get<Execution[]>(`/executions${query}`)
   },
   get: (id: number) => api.get<Execution>(`/executions/${id}`),
   getSteps: (executionId: number) => api.get<ExecutionStep[]>(`/executions/${executionId}/steps`),

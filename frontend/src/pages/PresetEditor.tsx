@@ -63,12 +63,23 @@ function PresetEditor() {
       .finally(() => setLoading(false))
   }, [gameId])
 
-  const selectPreset = (preset: Preset) => {
+  const selectPreset = async (preset: Preset) => {
     setSelectedPreset(preset)
     setPresetName(preset.name)
     setPresetDesc(preset.description || '')
-    const flow = preset.flow_data as { steps?: StepItem[] } | null
-    setSteps(flow?.steps || [])
+    // 通过详情接口获取完整 flow_data（含 JSON 解析）
+    try {
+      const detail = await presetsApi.get(preset.id)
+      const raw = detail.flow_data
+      if (typeof raw === 'string') {
+        const parsed = JSON.parse(raw)
+        setSteps(parsed.steps || [])
+      } else {
+        setSteps((raw as { steps?: StepItem[] } | null)?.steps || [])
+      }
+    } catch {
+      setSteps([])
+    }
   }
 
   const addStep = () => {
@@ -121,7 +132,7 @@ function PresetEditor() {
       const data: PresetFormData = {
         name: presetName,
         description: presetDesc,
-        flow_data: { steps: steps.map(({ nodeType, config, enabled }) => ({ nodeType, config, enabled })) },
+        flow_data: JSON.stringify({ steps: steps.map(({ nodeType, config, enabled }) => ({ nodeType, config, enabled })) }),
       }
       if (selectedPreset) {
         await presetsApi.update(selectedPreset.id, data)

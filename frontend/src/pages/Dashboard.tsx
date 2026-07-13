@@ -27,8 +27,8 @@ function Dashboard() {
 
   useEffect(() => {
     executionsApi
-      .list({ page_size: 10 })
-      .then((res) => setRecentExecutions(res.items))
+      .list({ limit: 10 })
+      .then(setRecentExecutions)
       .catch((err) => {
         setError(err.message)
         // 后端不可用时用空数据
