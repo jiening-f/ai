@@ -49,7 +49,7 @@ function Settings() {
       await settingsApi.setMultiple(settings)
       toast({ type: 'success', title: '设置已保存' })
     } catch {
-      toast({ type: 'success', title: '设置已保存' })
+      toast({ type: 'error', title: '保存失败', description: '请检查网络连接或稍后重试' })
     }
     setSaving(false)
   }
