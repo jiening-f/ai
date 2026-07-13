@@ -17,9 +17,10 @@ NODES_FILE = os.path.join(
     "data", "nodes.json"
 )
 
-# 全局引擎实例
+# 全局引擎实例（线程安全保护）
 _engine = NodeEngine()
 _run_thread: Optional[threading.Thread] = None
+_nodes_lock = threading.Lock()
 
 
 # ══ 请求模型 ══════════════════════════════════
@@ -150,33 +151,35 @@ def save_nodes(data: NodeFlowModel):
 
 @router.post("/nodes/run")
 def run_nodes(data: NodeFlowModel):
-    """启动节点流程"""
+    """启动节点流程（线程安全）"""
     global _engine, _run_thread
 
-    if _run_thread and _run_thread.is_alive():
-        raise HTTPException(409, "节点流程已在运行中")
+    with _nodes_lock:
+        if _run_thread and _run_thread.is_alive():
+            raise HTTPException(409, "节点流程已在运行中")
 
-    flow = _parse_nodes(_dumps_nodes(data))
+        flow = _parse_nodes(_dumps_nodes(data))
 
-    log_msgs = []
+        log_msgs = []
 
-    def on_log(msg: str):
-        log_msgs.append(msg)
+        def on_log(msg: str):
+            log_msgs.append(msg)
 
-    _engine = NodeEngine()
-    _run_thread = threading.Thread(target=_engine.run, args=(flow,), kwargs={"on_log": on_log})
-    _run_thread.daemon = True
-    _run_thread.start()
+        _engine = NodeEngine()
+        _run_thread = threading.Thread(target=_engine.run, args=(flow,), kwargs={"on_log": on_log})
+        _run_thread.daemon = True
+        _run_thread.start()
 
     return {"status": "ok", "message": "流程已启动", "loop_enabled": flow.loop_enabled, "max_loops": flow.max_loops}
 
 
 @router.post("/nodes/stop")
 def stop_nodes():
-    """停止节点流程"""
+    """停止节点流程（线程安全）"""
     global _engine, _run_thread
-    _engine.stop()
-    if _run_thread:
-        _run_thread.join(timeout=3)
-        _run_thread = None
+    with _nodes_lock:
+        _engine.stop()
+        if _run_thread:
+            _run_thread.join(timeout=3)
+            _run_thread = None
     return {"status": "ok", "message": "流程已停止"}
