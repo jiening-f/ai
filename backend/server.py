@@ -1,26 +1,59 @@
 """全能脚本 API 入口 — 端口 8765"""
+import os, sys
+
+# 路径引导：确保 backend/ 在 sys.path 中，使模块级导入在任意调用方式下均有效
+_BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+if _BACKEND_DIR not in sys.path:
+    sys.path.insert(0, _BACKEND_DIR)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import uvicorn
 
 from app.db import init_db
+from backend.engine.process_manager import shutdown_all, list_engines
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """启动时自动创建数据库表"""
+    """应用生命周期管理"""
+    # 启动时：初始化数据库
     await init_db()
     yield
+    # 关闭时：清理所有引擎子进程
+    shutdown_all()
 
 
 app = FastAPI(title="全能脚本 API", version="2.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+
 # 健康检查端点（Docker healthcheck 用）
 @app.get("/api/health")
 async def health():
-    return {"status": "ok"}
+    engines = list_engines()
+    return {
+        "status": "ok",
+        "engine_count": len(engines),
+        "engines": [
+            {
+                "execution_id": e["execution_id"],
+                "mode": e["mode"],
+                "status": e["status"],
+            }
+            for e in engines
+        ],
+    }
+
+
+# 活跃引擎列表（管理员用）
+@app.get("/api/engines")
+async def get_engines():
+    return {
+        "engines": list_engines(),
+    }
+
 
 # ── Stage 2: 数据库驱动的 REST API（新架构）──
 from app.api.games import router as games_router
