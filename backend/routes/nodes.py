@@ -3,12 +3,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-import json, os, threading
+import json, os
 
 from engine.node_engine import (
     NodeEngine, NodeFlow, MapConfig, FeatureNode,
     DetectType, Decision
 )
+from engine.process_manager import manager
 
 router = APIRouter()
 
@@ -16,10 +17,6 @@ NODES_FILE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "data", "nodes.json"
 )
-
-# 全局引擎实例
-_engine = NodeEngine()
-_run_thread: Optional[threading.Thread] = None
 
 
 # ══ 请求模型 ══════════════════════════════════
@@ -150,33 +147,35 @@ def save_nodes(data: NodeFlowModel):
 
 @router.post("/nodes/run")
 def run_nodes(data: NodeFlowModel):
-    """启动节点流程"""
-    global _engine, _run_thread
+    """启动节点流程（使用独立子进程）"""
+    import json as _json
 
-    if _run_thread and _run_thread.is_alive():
-        raise HTTPException(409, "节点流程已在运行中")
+    active = manager.list_engines()
+    for e in active:
+        if e["mode"] == "node" and e["status"] == "running":
+            raise HTTPException(409, "节点流程已在运行中")
 
-    flow = _parse_nodes(_dumps_nodes(data))
+    flow_json = _json.dumps(_dumps_nodes(data), ensure_ascii=False)
+    ep = manager.start_engine(mode="node", flow_json=flow_json)
 
-    log_msgs = []
-
-    def on_log(msg: str):
-        log_msgs.append(msg)
-
-    _engine = NodeEngine()
-    _run_thread = threading.Thread(target=_engine.run, args=(flow,), kwargs={"on_log": on_log})
-    _run_thread.daemon = True
-    _run_thread.start()
-
-    return {"status": "ok", "message": "流程已启动", "loop_enabled": flow.loop_enabled, "max_loops": flow.max_loops}
+    return {
+        "status": "ok",
+        "message": "流程已启动",
+        "execution_id": ep.execution_id,
+        "loop_enabled": data.loop_enabled,
+        "max_loops": data.max_loops,
+    }
 
 
 @router.post("/nodes/stop")
 def stop_nodes():
-    """停止节点流程"""
-    global _engine, _run_thread
-    _engine.stop()
-    if _run_thread:
-        _run_thread.join(timeout=3)
-        _run_thread = None
-    return {"status": "ok", "message": "流程已停止"}
+    """停止所有节点引擎"""
+    engines = manager.list_engines()
+    stopped = []
+    for e in engines:
+        if e["mode"] == "node" and e["status"] == "running":
+            manager.stop_engine(e["execution_id"])
+            stopped.append(e["execution_id"])
+    if not stopped:
+        return {"status": "ok", "message": "没有运行中的节点流程"}
+    return {"status": "ok", "message": f"已停止 {len(stopped)} 个节点引擎", "stopped": stopped}
