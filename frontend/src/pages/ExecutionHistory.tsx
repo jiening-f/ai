@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { executionsApi, Execution, ExecutionStep } from '../api/executions'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
@@ -30,22 +30,15 @@ function ExecutionHistory() {
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
 
   // ── WebSocket 实时状态 ──
-  // 找到正在运行的执行，订阅其 WebSocket
+  // 仅当有运行中的执行时才建立 WebSocket 连接
   const runningExec = executions.find((e) => e.status === 'running')
   const {
     connected: wsConnected,
     on: wsOn,
   } = useWebSocket(
     runningExec ? `/api/ws/execution/${runningExec.id}` : '/api/ws/execution/0',
+    { enabled: !!runningExec },
   )
-
-  // 跟踪当前订阅的 execution_id，避免重复订阅
-  const wsExecIdRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (!runningExec || runningExec.id === wsExecIdRef.current) return
-    wsExecIdRef.current = runningExec.id
-  }, [runningExec?.id])
 
   useEffect(() => {
     // 监听 WebSocket 状态变更事件，自动刷新列表
@@ -88,7 +81,7 @@ function ExecutionHistory() {
     }
   }, [wsOn, expandedId])
 
-  const loadExecutions = () => {
+  const loadExecutions = useCallback(() => {
     setLoading(true)
     setError(null)
     executionsApi
@@ -109,11 +102,11 @@ function ExecutionHistory() {
         setTotal(mockItems.length)
       })
       .finally(() => setLoading(false))
-  }
+  }, [statusFilter, page, pageSize])
 
   useEffect(() => {
     loadExecutions()
-  }, [page, statusFilter])
+  }, [loadExecutions])
 
   const toggleExpand = async (execution: Execution) => {
     if (expandedId === execution.id) {

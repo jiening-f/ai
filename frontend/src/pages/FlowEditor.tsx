@@ -89,12 +89,13 @@ function FlowEditor() {
   const logEndRef = useRef<HTMLDivElement>(null)
   const [logPaused, setLogPaused] = useState(false)
 
-  // WebSocket 实时执行反馈
+  // WebSocket 实时执行反馈（仅执行时连接）
   const {
     connected: wsConnected,
     on: wsOn,
   } = useWebSocket(
     executionId ? `/api/ws/execution/${executionId}` : '/api/ws/execution/0',
+    { enabled: !!executionId },
   )
 
   useEffect(() => {
@@ -156,10 +157,6 @@ function FlowEditor() {
 
   const handleNodeDragStart = (e: React.DragEvent, node: CanvasNode) => {
     e.dataTransfer.setData('text/plain', JSON.stringify({ type: node.type, label: node.label }))
-  }
-
-  const handleNodeDragEnd = (e: React.DragEvent) => {
-    // 简单位置更新：不做精确拖拽位置映射
   }
 
   const handleSave = () => {

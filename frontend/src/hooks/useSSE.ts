@@ -1,15 +1,19 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 
-interface SSEMessage {
-  type: string
-  data: string
-}
-
 type MessageHandler = (data: unknown) => void
+
+/** 安全解析 JSON，失败时返回原始文本 */
+function tryParse(data: string): unknown {
+  try {
+    return JSON.parse(data)
+  } catch {
+    return data
+  }
+}
 
 /**
  * SSE (Server-Sent Events) Hook
- * 用于连接到后端的实时日志流端点
+ * 用于连接到后端的实时日志流端点，支持自动重连
  */
 export function useSSE(url: string) {
   const sourceRef = useRef<EventSource | null>(null)
@@ -37,15 +41,9 @@ export function useSSE(url: string) {
 
     // 通用 message 事件
     es.onmessage = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data)
-        const handlers = handlersRef.current.get('message') || []
-        handlers.forEach((fn) => fn(data))
-      } catch {
-        // 非 JSON 数据原样传递
-        const handlers = handlersRef.current.get('message') || []
-        handlers.forEach((fn) => fn(event.data))
-      }
+      const data = tryParse(event.data)
+      const handlers = handlersRef.current.get('message') || []
+      handlers.forEach((fn) => fn(data))
     }
 
     // 具名事件监听
@@ -53,14 +51,9 @@ export function useSSE(url: string) {
     eventTypes.forEach((type) => {
       es.addEventListener(type, (event: Event) => {
         const me = event as MessageEvent
-        try {
-          const data = JSON.parse(me.data)
-          const handlers = handlersRef.current.get(type) || []
-          handlers.forEach((fn) => fn(data))
-        } catch {
-          const handlers = handlersRef.current.get(type) || []
-          handlers.forEach((fn) => fn(me.data))
-        }
+        const data = tryParse(me.data)
+        const handlers = handlersRef.current.get(type) || []
+        handlers.forEach((fn) => fn(data))
       })
     })
   }, [url])

@@ -19,6 +19,7 @@ from app.schemas.preset import (
 )
 from app.api import success, api_error, get_or_404
 from app.api.events import event_bridge
+from core.constants import _flog
 
 router = APIRouter(prefix="/presets", tags=["Presets"])
 
@@ -128,9 +129,6 @@ async def execute_preset(preset_id: int, db: AsyncSession = Depends(get_db)):
 
     eid = execution.id  # 捕获供回调使用
 
-    # 保存当前步序用于事件推送
-    _current_step = {"idx": 0, "round": 0}
-
     # 后台执行回调 — 使用 DB_PATH 避免四层 os.path.dirname（P1#2 修复）
     def _on_done():
         try:
@@ -164,8 +162,8 @@ async def execute_preset(preset_id: int, db: AsyncSession = Depends(get_db)):
                     "timestamp": datetime.now().isoformat(),
                 },
             })
-        except Exception:
-            pass
+        except Exception as e:
+            _flog(f"执行 {eid} 完成回调异常: {e}")
 
     def _bg_run():
         from engine.engine import ScriptEngine
@@ -178,58 +176,37 @@ async def execute_preset(preset_id: int, db: AsyncSession = Depends(get_db)):
         if state:
             state["engine"] = eng
 
-        def on_log(msg: str):
-            """引擎日志回调 — 推送步骤日志事件到 WebSocket"""
-            step_idx = _current_step["idx"]
-            round_num = _current_step["round"]
-            # 检测轮次分隔
-            if msg.startswith("─") or msg.startswith("第 "):
-                if "第 " in msg and "轮" in msg:
-                    _current_step["round"] = round_num + 1
-                return
-            # 检测步骤日志 [N/M] 或 OK/X/STOP
-            for prefix in ("  [", "    OK", "    X", "    !!", "STOP", "---"):
-                if msg.startswith(prefix):
-                    # 解析步骤编号
-                    if msg.startswith("  [") and "/" in msg:
-                        try:
-                            idx_str = msg.split("[")[1].split("/")[0]
-                            _current_step["idx"] = int(idx_str)
-                        except ValueError:
-                            pass
-                    event_bridge.push(eid, {
-                        "type": "step_log",
-                        "data": {
-                            "execution_id": eid,
-                            "step_order": _current_step["idx"],
-                            "round": _current_step["round"],
-                            "node_type": "",
-                            "status": "running",
-                            "message": msg.strip(),
-                            "timestamp": datetime.now().isoformat(),
-                        },
-                    })
-                    break
+        def on_step(step_order: int, total: int, round_num: int, status: str, message: str):
+            """结构化步骤回调 — 推送步骤事件到 WebSocket"""
+            event_bridge.push(eid, {
+                "type": "step_log",
+                "data": {
+                    "execution_id": eid,
+                    "step_order": step_order,
+                    "total": total,
+                    "round": round_num,
+                    "node_type": "",
+                    "status": status,
+                    "message": message,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            })
 
         try:
             eng.run(
                 {"name": preset.name, "steps": steps,
                  "max_runs": max_runs, "round_interval": round_interval, "chain": chain},
-                chain=chain, on_log=on_log, on_done=_on_done,
+                chain=chain, on_step=on_step, on_done=_on_done,
             )
-        except Exception:
-            pass
+        except Exception as e:
+            _flog(f"预设 {preset.name} (id={preset_id}) 执行异常: {e}")
         finally:
             _running.pop(preset_id, None)
 
     # P1#3 修复：启动线程前预先注册完整 state，避免竞态条件
     t = threading.Thread(target=_bg_run, daemon=True)
-    # 先创建引擎实例用于注册（_bg_run 内部也会创建，但此处用于提前占位）
-    from engine.engine import ScriptEngine
-    eng_temp = ScriptEngine()
     _running[preset_id] = {"engine": None, "thread": t, "execution_id": eid}
     t.start()
-    # 线程启动后，_bg_run 内部会覆写 engine 引用
 
     return success({"execution_id": eid, "status": "running",
                      "message": f"预设 «{preset.name}» 已启动"})

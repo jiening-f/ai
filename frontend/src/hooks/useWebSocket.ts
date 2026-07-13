@@ -2,7 +2,13 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 
 type MessageHandler = (data: unknown) => void
 
-export function useWebSocket(path: string) {
+interface UseWebSocketOptions {
+  /** 是否启用连接，false 时不建立 WebSocket */
+  enabled?: boolean
+}
+
+export function useWebSocket(path: string, options: UseWebSocketOptions = {}) {
+  const { enabled = true } = options
   const wsRef = useRef<WebSocket | null>(null)
   const handlersRef = useRef<Map<string, MessageHandler[]>>(new Map())
   const [connected, setConnected] = useState(false)
@@ -35,12 +41,20 @@ export function useWebSocket(path: string) {
   }, [path])
 
   useEffect(() => {
+    if (!enabled) {
+      setConnected(false)
+      // 关闭已有连接
+      clearTimeout(reconnectTimerRef.current)
+      wsRef.current?.close()
+      wsRef.current = null
+      return
+    }
     connect()
     return () => {
       clearTimeout(reconnectTimerRef.current)
       wsRef.current?.close()
     }
-  }, [connect])
+  }, [connect, enabled])
 
   const on = useCallback((type: string, handler: MessageHandler) => {
     const handlers = handlersRef.current.get(type) || []

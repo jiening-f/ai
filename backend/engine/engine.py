@@ -214,10 +214,18 @@ class ScriptEngine:
             return True
         return True
 
-    def run(self, preset, chain=True, on_log=None, on_done=None,
+    def run(self, preset, chain=True, on_log=None, on_done=None, on_step=None,
             region=None, hwnd=None, override_max_runs=None, override_ri=None,
             game_hwnd=None):
-        """运行预设，game_hwnd 为游戏窗口句柄（用于检测窗口是否存活）"""
+        """运行预设。
+
+        参数:
+            on_log(str):  文本日志回调（兼容旧接口）
+            on_step(step_order, total, round_num, status, message): 结构化步骤回调
+                 - status: "running" | "completed" | "error"
+            on_done():  执行完成回调
+            game_hwnd:  游戏窗口句柄（用于检测窗口是否存活）
+        """
         bg = self.background_mode and hwnd is not None
         self._game_hwnd = game_hwnd
         steps = [s for s in preset.get("steps",[]) if s.get("enabled",True)]
@@ -242,14 +250,16 @@ class ScriptEngine:
             if on_log: on_log(f"\n{'─'*35}\n第 {n} 轮")
             ok = True
             for i, s in enumerate(steps):
-                self._mon = {"step":i+1,"total":total,"action":s.get("action_value",""),"error":"","status":"执行中"}
+                step_order = i + 1
+                action_value = s.get("action_value", "")
+                self._mon = {"step": step_order, "total": total, "action": action_value, "error": "", "status": "执行中"}
                 ct, cv, at, av, dur, dly = (s.get(k) for k in ("condition_type","condition_value","action_type","action_value","duration","delay"))
                 if dly > 0: self._sleep(dly)
                 if not self.running: break
                 _bgh = hwnd if bg else None
                 if ct and cv.strip():
                     if ct == StepType.TEXT:
-                        if on_log: on_log(f"  [{i+1}/{total}] 等文字«{cv}»...")
+                        if on_log: on_log(f"  [{step_order}/{total}] 等文字«{cv}»...")
                         pos = None
                         while self.running and not self._stop_ev.is_set():
                             pos = OCR.find_text(cv, region, 0.5, hwnd=_bgh)
@@ -257,20 +267,28 @@ class ScriptEngine:
                             self._sleep(0.3)
                         if not self.running: break
                     elif ct == StepType.IMAGE:
-                        if on_log: on_log(f"  [{i+1}/{total}] 等图片«{cv}»...")
+                        if on_log: on_log(f"  [{step_order}/{total}] 等图片«{cv}»...")
                         pos = None
                         while self.running and not self._stop_ev.is_set():
                             pos = TemplateMatcher.find(cv, region, conf=0.78, hwnd=_bgh)
                             if pos: break
                             self._sleep(0.3)
                         if not self.running: break
+                # 结构化回调：步骤开始
+                if on_step:
+                    node_type = s.get("action_type", s.get("condition_type", ""))
+                    on_step(step_order, total, n, "running", f"执行 {node_type}: {action_value}")
                 cnt = s.get("count", 1)
                 if cnt <= 0:
                     try:
                         if not self._exec_action(at, av, dur, bg, hwnd, on_log, region, s):
                             ok = False
+                            if on_step:
+                                on_step(step_order, total, n, "error", self._mon.get("error", "步骤执行失败"))
                     except Exception as e:
                         if on_log: on_log(f"    X {e}"); self._mon["error"] = str(e); ok = False
+                        if on_step:
+                            on_step(step_order, total, n, "error", str(e))
                 else:
                     for _ in range(cnt):
                         if not self.running: break
@@ -279,6 +297,8 @@ class ScriptEngine:
                                 ok = False; break
                         except Exception as e:
                             if on_log: on_log(f"    X {e}"); self._mon["error"] = str(e); ok = False; break
+                    if ok and on_step:
+                        on_step(step_order, total, n, "completed", f"完成 {action_value}")
                 if chain and not ok: break
                 if not self.running: break
             if chain and not ok:

@@ -1,11 +1,52 @@
 """SSE 日志流端点 — 实时日志推送"""
 import asyncio
+import json
 import os
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import StreamingResponse
 from core.constants import LOG_FILE
 
 router = APIRouter(tags=["Logs"])
+
+# 估算每行字节数，用于 seek 定位
+_EST_LINE_BYTES = 200
+
+
+def _read_tail_lines(filepath: str, count: int) -> list[str]:
+    """只读文件末尾 count 行，不加载整个文件到内存"""
+    if not os.path.exists(filepath):
+        return []
+    try:
+        fsize = os.path.getsize(filepath)
+        if fsize == 0:
+            return []
+        # 预估需要读取的字节数
+        estimate = min(fsize, count * _EST_LINE_BYTES)
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+            f.seek(max(0, fsize - estimate))
+            buf = f.read()
+        lines = buf.splitlines()
+        # 如果 seek 到了一行的中间，丢弃第一条不完整的行
+        # 若读取的起始位置不是文件开头，第一行可能不完整
+        if estimate < fsize and lines:
+            lines = lines[1:]
+        return [ln.rstrip("\n") for ln in lines[-count:]] if len(lines) > count else [ln.rstrip("\n") for ln in lines]
+    except Exception:
+        return []
+
+
+def _count_lines(filepath: str) -> int:
+    """高效文件行数统计"""
+    if not os.path.exists(filepath):
+        return 0
+    count = 0
+    try:
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+            for _ in f:
+                count += 1
+    except Exception:
+        pass
+    return count
 
 
 @router.get("/logs")
@@ -17,15 +58,11 @@ async def get_logs(
         return {"success": True, "data": {"lines": [], "total": 0}, "error": None}
 
     try:
-        with open(LOG_FILE, "r", encoding="utf-8", errors="ignore") as f:
-            all_lines = f.readlines()
-        recent = all_lines[-lines:] if len(all_lines) > lines else all_lines
+        recent = _read_tail_lines(LOG_FILE, lines)
+        total = _count_lines(LOG_FILE)
         return {
             "success": True,
-            "data": {
-                "lines": [ln.rstrip("\n") for ln in recent],
-                "total": len(all_lines),
-            },
+            "data": {"lines": recent, "total": total},
             "error": None,
         }
     except Exception as e:
@@ -43,16 +80,9 @@ async def stream_logs(request: Request):
             last_pos = os.path.getsize(LOG_FILE)
 
         # 首先发送最近 20 行作为初始数据
-        initial_lines = []
-        if os.path.exists(LOG_FILE):
-            try:
-                with open(LOG_FILE, "r", encoding="utf-8", errors="ignore") as f:
-                    all_lines = f.readlines()
-                initial_lines = [ln.rstrip("\n") for ln in all_lines[-20:]] if len(all_lines) > 20 else [ln.rstrip("\n") for ln in all_lines]
-            except Exception:
-                pass
+        initial_lines = _read_tail_lines(LOG_FILE, 20)
 
-        yield f"event: init\ndata: {__import__('json').dumps({'lines': initial_lines})}\n\n"
+        yield f"event: init\ndata: {json.dumps({'lines': initial_lines})}\n\n"
 
         # 持续监控文件新增内容
         while True:
@@ -70,7 +100,7 @@ async def stream_logs(request: Request):
                         for line in new_content.splitlines():
                             line = line.strip()
                             if line:
-                                yield f"data: {__import__('json').dumps({'line': line})}\n\n"
+                                yield f"data: {json.dumps({'line': line})}\n\n"
                     elif current_size < last_pos:
                         # 文件被截断了，从头开始
                         last_pos = 0
