@@ -21,16 +21,8 @@ function Settings() {
   useEffect(() => {
     settingsApi
       .getAll()
-      .then((data: unknown) => {
-        if (Array.isArray(data)) {
-          const map: SettingsMap = {}
-          data.forEach((item: { key: string; value: string }) => {
-            map[item.key] = item.value
-          })
-          setSettings(map)
-        } else {
-          setSettings(data as SettingsMap)
-        }
+      .then((data: SettingsMap) => {
+        setSettings(data)
       })
       .catch(() => {
         // 默认设置

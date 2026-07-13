@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { executionsApi, Execution } from '../api/executions'
 import { useToast } from '../components/ui/Toast'
@@ -18,12 +18,23 @@ function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const statsCards = [
-    { title: '预设总数', value: '0', desc: '所有游戏' },
-    { title: '今日执行', value: '0', desc: '24 小时内' },
-    { title: '执行成功率', value: '-', desc: '最近 50 次' },
-    { title: '活跃插件', value: '0', desc: '已启用' },
-  ]
+  // 从最近执行数据计算统计指标
+  const statsCards = useMemo(() => {
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayExecs = recentExecutions.filter((e) => e.started_at && new Date(e.started_at) >= todayStart)
+    const completedCount = recentExecutions.filter((e) => e.status === 'completed').length
+    const successRate = recentExecutions.length > 0
+      ? `${Math.round((completedCount / recentExecutions.length) * 100)}%`
+      : '-'
+
+    return [
+      { title: '预设总数', value: `${recentExecutions.length ? '...' : '-'}`, desc: '所有游戏' },
+      { title: '今日执行', value: `${recentExecutions.length > 0 ? todayExecs.length : '-'}`, desc: '24 小时内' },
+      { title: '执行成功率', value: successRate, desc: `最近 ${recentExecutions.length || 0} 次` },
+      { title: '活跃插件', value: '-', desc: '已启用' },
+    ]
+  }, [recentExecutions])
 
   useEffect(() => {
     executionsApi

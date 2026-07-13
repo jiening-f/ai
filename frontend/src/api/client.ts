@@ -2,6 +2,15 @@
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 const API_BASE = isTauri ? 'http://127.0.0.1:8765/api' : '/api'
 
+/** 从 API_BASE 推导 WebSocket 连接地址 */
+export function getWsBase(): string {
+  if (isTauri || API_BASE.startsWith('http')) {
+    return API_BASE.replace(/^http/, 'ws').replace(/\/api$/, '')
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}`
+}
+
 interface RequestOptions {
   method?: string
   body?: unknown

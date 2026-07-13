@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { presetsApi, Preset, PresetFormData } from '../api/presets'
 import { useToast } from '../components/ui/Toast'
@@ -27,12 +27,12 @@ const NODE_TYPE_OPTIONS = [
   { value: 'text_output', label: '文本输出' },
 ]
 
-let stepCounter = 0
-
 function PresetEditor() {
   const { gameId } = useParams<{ gameId: string }>()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const stepCounterRef = useRef(0)
+
 
   const [presets, setPresets] = useState<Preset[]>([])
   const [selectedPreset, setSelectedPreset] = useState<Preset | null>(null)
@@ -83,10 +83,10 @@ function PresetEditor() {
   }
 
   const addStep = () => {
-    stepCounter++
+    stepCounterRef.current++
     setSteps((prev) => [
       ...prev,
-      { id: `step_${stepCounter}`, order: prev.length + 1, nodeType: 'wait', config: '', enabled: true },
+      { id: `step_${stepCounterRef.current}`, order: prev.length + 1, nodeType: 'wait', config: '', enabled: true },
     ])
   }
 

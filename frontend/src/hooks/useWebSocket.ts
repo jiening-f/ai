@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
+import { getWsBase } from '../api/client'
 
 type MessageHandler = (data: unknown) => void
 
@@ -9,9 +10,8 @@ export function useWebSocket(path: string) {
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   const connect = useCallback(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = '127.0.0.1:8765'
-    const url = `${protocol}//${host}${path}`
+    const base = getWsBase()
+    const url = `${base}${path}`
 
     const ws = new WebSocket(url)
     wsRef.current = ws

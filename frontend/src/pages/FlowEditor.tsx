@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useToast } from '../components/ui/Toast'
 
@@ -66,11 +66,11 @@ interface CanvasNode {
   y: number
 }
 
-let nodeCounter = 0
-
 function FlowEditor() {
   const { presetId } = useParams<{ presetId: string }>()
   const { toast } = useToast()
+  const nodeCounterRef = useRef(0)
+
   const [canvasNodes, setCanvasNodes] = useState<CanvasNode[]>([
     { id: 'n_1', type: 'start', label: '开始', x: 300, y: 40 },
     { id: 'n_2', type: 'wait', label: '等待 1s', x: 300, y: 160 },
@@ -85,7 +85,7 @@ function FlowEditor() {
     const data = e.dataTransfer.getData('text/plain')
     if (!data) return
     const { type, label } = JSON.parse(data)
-    nodeCounter++
+    nodeCounterRef.current++
     const rect = e.currentTarget.getBoundingClientRect()
     const x = (e.clientX - rect.left - 75) / zoom
     const y = (e.clientY - rect.top - 20) / zoom
@@ -100,10 +100,6 @@ function FlowEditor() {
 
   const handleNodeDragStart = (e: React.DragEvent, node: CanvasNode) => {
     e.dataTransfer.setData('text/plain', JSON.stringify({ type: node.type, label: node.label }))
-  }
-
-  const handleNodeDragEnd = (e: React.DragEvent) => {
-    // 简单位置更新：不做精确拖拽位置映射
   }
 
   const handleSave = () => {

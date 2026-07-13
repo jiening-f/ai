@@ -28,11 +28,7 @@ function GameManager() {
       .then(setGames)
       .catch((err) => {
         setError(err.message)
-        // 后端不可用时的回退数据
-        setGames([
-          { id: 1, name: '原神', window_title: '原神', window_class: 'UnityWndClass', preset_count: 2, created_at: '', updated_at: '' },
-          { id: 2, name: '鸣潮', window_title: '鸣潮', window_class: 'UnrealWindow', preset_count: 1, created_at: '', updated_at: '' },
-        ])
+        setGames([])
       })
       .finally(() => setLoading(false))
   }
