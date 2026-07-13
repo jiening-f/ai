@@ -27,6 +27,15 @@ const NODE_TYPE_OPTIONS = [
   { value: 'text_output', label: '文本输出' },
 ]
 
+const NODE_TYPE_ICONS: Record<string, string> = {
+  start: '▶', end: '■', wait: '⏳',
+  condition: '❓', loop: '↻',
+  key_press: '⌨', key_combo: '⇧',
+  mouse_click: '🖱', mouse_dblclick: '🖱',
+  ocr_recognize: '🔍', template_match: '🖼',
+  screenshot: '📷', text_output: '💬',
+}
+
 let stepCounter = 0
 
 function PresetEditor() {
@@ -131,7 +140,7 @@ function PresetEditor() {
         toast({ type: 'success', title: '预设已创建' })
       }
     } catch {
-      toast({ type: 'success', title: '预设已保存' })
+      toast({ type: 'error', title: '保存失败', description: '请检查网络连接或稍后重试' })
     }
     setSaving(false)
   }
@@ -155,18 +164,32 @@ function PresetEditor() {
 
   return (
     <div className="page">
+      {/* 页面头部 */}
       <div className="page-header">
-        <h1>预设编辑 {gameId && gameId !== '0' ? `- 游戏 #${gameId}` : ''}</h1>
+        <div>
+          <h1 style={{ marginBottom: 4 }}>预设编辑</h1>
+          <div className="text-secondary text-small page-subtitle">
+            {gameId && gameId !== '0' ? `游戏 #${gameId}` : '选择游戏后编辑预设'}
+          </div>
+        </div>
         <div className="flex gap-sm">
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? '保存中...' : '💾 保存'}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            {saving ? '保存中...' : '保存'}
           </button>
-          <button className="btn" onClick={handleExecute}>▶ 执行</button>
-          <button className="btn" onClick={handleStop}>⏹ 停止</button>
+          <button className="btn" onClick={handleExecute}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            执行
+          </button>
+          <button className="btn" onClick={handleStop}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+            停止
+          </button>
         </div>
       </div>
 
-      <div className="section">
+      {/* 基本信息卡片 */}
+      <div className="card-section section">
         <div className="form-row">
           <div className="form-group" style={{ flex: 2 }}>
             <label className="form-label">预设名称</label>
@@ -178,7 +201,7 @@ function PresetEditor() {
             />
           </div>
         </div>
-        <div className="form-group">
+        <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">描述</label>
           <textarea
             className="input"
@@ -190,30 +213,36 @@ function PresetEditor() {
         </div>
       </div>
 
-      {/* 步骤表格 */}
+      {/* 步骤编辑 */}
       <div className="section">
         <div className="section-header">
-          <h2>执行步骤</h2>
+          <div className="flex items-center gap-sm">
+            <h2 style={{ marginBottom: 0 }}>执行步骤</h2>
+            <span className="badge badge-info">{steps.length} 项</span>
+          </div>
           <button className="btn btn-sm btn-primary" onClick={addStep}>
-            + 添加步骤
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            添加步骤
           </button>
         </div>
 
         {steps.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-text">暂无步骤，点击"添加步骤"开始</div>
+            <div className="empty-state-icon" style={{ fontSize: 40 }}>+</div>
+            <div className="empty-state-text">暂无步骤</div>
+            <button className="btn btn-sm btn-primary" onClick={addStep}>添加第一条步骤</button>
           </div>
         ) : (
           <div className="table-wrapper">
             <table className="table">
               <thead>
                 <tr>
-                  <th style={{ width: 40 }}></th>
-                  <th style={{ width: 60 }}>序号</th>
+                  <th style={{ width: 36 }}></th>
+                  <th style={{ width: 52 }}>#</th>
                   <th style={{ width: 140 }}>节点类型</th>
                   <th>配置参数</th>
-                  <th style={{ width: 80 }}>启用</th>
-                  <th style={{ width: 80 }} className="col-actions">操作</th>
+                  <th style={{ width: 72 }}>启用</th>
+                  <th style={{ width: 72 }} className="col-actions">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,27 +253,32 @@ function PresetEditor() {
                     onDragStart={() => handleDragStart(index)}
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDrop={handleDrop}
-                    style={{ cursor: 'grab', opacity: step.enabled ? 1 : 0.5 }}
+                    className={!step.enabled ? 'row-disabled' : ''}
+                    style={{ cursor: 'grab' }}
                   >
-                    <td className="text-tertiary">⠿</td>
-                    <td>{step.order}</td>
+                    <td className="cell-drag-handle" title="拖拽排序">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+                    </td>
+                    <td><span className="step-order">{step.order}</span></td>
                     <td>
-                      <select
-                        className="input"
-                        value={step.nodeType}
-                        onChange={(e) => updateStep(step.id, 'nodeType', e.target.value)}
-                        style={{ width: '130px' }}
-                      >
-                        {NODE_TYPE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex items-center gap-sm">
+                        <span className="node-type-icon">{NODE_TYPE_ICONS[step.nodeType] || '⚙'}</span>
+                        <select
+                          className="input input-sm"
+                          value={step.nodeType}
+                          onChange={(e) => updateStep(step.id, 'nodeType', e.target.value)}
+                        >
+                          {NODE_TYPE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </td>
                     <td>
                       <input
-                        className="input"
+                        className="input input-sm"
                         value={step.config}
                         onChange={(e) => updateStep(step.id, 'config', e.target.value)}
                         placeholder="配置参数..."
@@ -254,11 +288,15 @@ function PresetEditor() {
                       <div
                         className={`toggle ${step.enabled ? 'active' : ''}`}
                         onClick={() => toggleStep(step.id)}
+                        role="switch"
+                        aria-checked={step.enabled}
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleStep(step.id) }}
                       />
                     </td>
                     <td className="col-actions">
-                      <button className="btn btn-sm btn-danger" onClick={() => removeStep(step.id)}>
-                        删除
+                      <button className="btn btn-sm btn-ghost btn-danger-text" onClick={() => removeStep(step.id)} title="删除步骤">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                       </button>
                     </td>
                   </tr>
