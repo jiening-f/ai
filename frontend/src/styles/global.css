@@ -1,3 +1,5 @@
+@import './tailwind.css';
+
 /* ========== 设计 Token - 基于 ui-design/design-tokens.md ========== */
 :root {
   /* 主色调 */

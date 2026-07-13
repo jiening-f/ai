@@ -1,4 +1,6 @@
-const API_BASE = '/api'
+// 判断是否在 Tauri 环境中（tauri 下无法使用相对路径 API）
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+const API_BASE = isTauri ? 'http://127.0.0.1:8765/api' : '/api'
 
 interface RequestOptions {
   method?: string
