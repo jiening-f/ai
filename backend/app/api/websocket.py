@@ -1,4 +1,5 @@
 """WebSocket 端点 — 实时推送执行状态和步骤日志"""
+import asyncio
 from datetime import datetime
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -11,6 +12,8 @@ router = APIRouter()
 
 # {execution_id: [WebSocket, ...]}
 _connections: dict[int, list[WebSocket]] = {}
+# R2 修复: 保存主事件循环引用，供后台线程使用 run_coroutine_threadsafe
+_main_loop: asyncio.AbstractEventLoop = None
 
 
 def _status_msg(ex: Execution) -> dict:
@@ -42,6 +45,95 @@ def _step_msg(step: ExecutionStep) -> dict:
     }
 
 
+# ── R2 修复: 异步广播函数（由同步代码通过 run_coroutine_threadsafe 调用）──
+
+async def broadcast_status(execution_id: int, status_data: dict):
+    """广播执行状态变更到所有 WebSocket 客户端"""
+    conns = _connections.get(execution_id, [])
+    dead = []
+    for ws in conns:
+        try:
+            await ws.send_json({
+                "type": "execution_status",
+                "data": status_data,
+            })
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        if ws in conns:
+            conns.remove(ws)
+
+
+async def broadcast_step(execution_id: int, step_data: dict):
+    """广播步骤日志到所有 WebSocket 客户端"""
+    conns = _connections.get(execution_id, [])
+    dead = []
+    for ws in conns:
+        try:
+            await ws.send_json({
+                "type": "step_log",
+                "data": step_data,
+            })
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        if ws in conns:
+            conns.remove(ws)
+
+
+async def broadcast_log(execution_id: int, level: str, message: str):
+    """广播日志消息到所有 WebSocket 客户端"""
+    conns = _connections.get(execution_id, [])
+    dead = []
+    for ws in conns:
+        try:
+            await ws.send_json({
+                "type": "log",
+                "data": {
+                    "execution_id": execution_id,
+                    "level": level,
+                    "message": message,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            })
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        if ws in conns:
+            conns.remove(ws)
+
+
+def get_ws_connections(execution_id: int) -> list[WebSocket]:
+    """获取指定执行的 WebSocket 连接列表"""
+    return _connections.get(execution_id, [])
+
+
+# ── R2 修复: 线程安全广播调度器 ──
+
+def schedule_broadcast_status(execution_id: int, status_data: dict):
+    """从任何线程安全调度异步广播（使用 run_coroutine_threadsafe）"""
+    if _main_loop and _main_loop.is_running():
+        asyncio.run_coroutine_threadsafe(
+            broadcast_status(execution_id, status_data), _main_loop
+        )
+
+
+def schedule_broadcast_step(execution_id: int, step_data: dict):
+    """从任何线程安全调度异步广播"""
+    if _main_loop and _main_loop.is_running():
+        asyncio.run_coroutine_threadsafe(
+            broadcast_step(execution_id, step_data), _main_loop
+        )
+
+
+def schedule_broadcast_log(execution_id: int, level: str, message: str):
+    """从任何线程安全调度异步广播"""
+    if _main_loop and _main_loop.is_running():
+        asyncio.run_coroutine_threadsafe(
+            broadcast_log(execution_id, level, message), _main_loop
+        )
+
+
 @router.websocket("/api/ws/execution/{execution_id}")
 async def ws_execution(websocket: WebSocket, execution_id: int):
     """WebSocket: 实时推送执行状态和步骤日志
@@ -49,6 +141,10 @@ async def ws_execution(websocket: WebSocket, execution_id: int):
     连接建立时自动推送当前已有数据。
     客户端可发送 "ping" 收到 "pong"。
     """
+    global _main_loop
+    if _main_loop is None:
+        _main_loop = asyncio.get_running_loop()
+
     await websocket.accept()
 
     async with AsyncSessionLocal() as db:

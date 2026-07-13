@@ -150,12 +150,14 @@ class ScriptRunner:
     async def step(self):
         """单步执行（执行一个节点后自动暂停）"""
         if self._state in (EngineState.PAUSED, EngineState.IDLE):
+            # B3 修复: 确保 _ctx 在使用前已初始化
+            if self._ctx is None:
+                self._ctx = ExecutionContext()
             self._ctx.enable_step_mode()
             if self._state == EngineState.IDLE:
                 # 首次单步：启动执行循环
-                self._ctx.step_once()
-                self._ctx = self._ctx or ExecutionContext()
                 self._ctx.mark_start()
+                self._ctx.step_once()
                 self._set_state(EngineState.RUNNING)
                 try:
                     await self._execution_loop()
@@ -229,7 +231,11 @@ class ScriptRunner:
                     break
                 elif self.on_error == "continue":
                     ctx.warn(f"节点执行失败，跳过: {result.error}", current_id)
-                # retry 由 _execute_node 内部处理
+                elif self.on_error == "retry":
+                    # B4 修复: retry 用尽后视为致命错误，停止执行
+                    ctx.error(f"节点执行失败（重试已用尽），停止: {result.error}", current_id)
+                    self._set_state(EngineState.ERROR)
+                    break
 
             current_id = next_id
 
