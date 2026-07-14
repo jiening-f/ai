@@ -27,9 +27,15 @@
     "icon": [
       "icons/icon.png"
     ],
+    "resources": [
+      "resources/WebView2Loader.dll"
+    ],
     "externalBin": [
       "backend"
-    ]
+    ],
+    "nsis": {
+      "installerHooks": "./nsis-hooks.nsh"
+    }
   },
   "plugins": {
     "shell": {
