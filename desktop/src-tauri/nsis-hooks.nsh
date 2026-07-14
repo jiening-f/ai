@@ -9,6 +9,9 @@
 !macro NSIS_HOOK_POSTINSTALL
   ; 安装完成后，将 WebView2Loader.dll 从 resources 子目录复制到安装根目录
   CopyFiles /SILENT "$INSTDIR\resources\WebView2Loader.dll" "$INSTDIR\WebView2Loader.dll"
+  ${IfNot} ${FileExists} "$INSTDIR\WebView2Loader.dll"
+    MessageBox MB_ICONEXCLAMATION "WebView2Loader.dll 复制失败，程序可能无法启动。请重新安装。"
+  ${EndIf}
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL

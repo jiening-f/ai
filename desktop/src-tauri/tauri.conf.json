@@ -33,8 +33,10 @@
     "externalBin": [
       "backend"
     ],
-    "nsis": {
-      "installerHooks": "./nsis-hooks.nsh"
+    "windows": {
+      "nsis": {
+        "installerHooks": "./nsis-hooks.nsh"
+      }
     }
   },
   "plugins": {
