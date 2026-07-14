@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全能脚本 — 循环节点</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══ 顶栏 ═══ -->
+  <header class="topbar">
+    <nav class="topbar-nav">
+      <button class="topbar-tab" id="tab-basic">基础页</button>
+      <button class="topbar-tab active" id="tab-loop">循环节点页</button>
+    </nav>
+    <div class="topbar-brand">全能脚本</div>
+    <div class="topbar-status">
+      <span class="status-dot idle"></span>
+      <span class="status-text">待命</span>
+    </div>
+  </header>
+
+  <!-- ═══ 主体 ═══ -->
+  <div class="layout">
+
+    <!-- 左栏：地图列表 -->
+    <aside class="map-panel">
+      <div class="panel-header">
+        <span>地图列表</span>
+        <button id="btn-add-map" class="btn btn-sm btn-outline">+ 添加地图</button>
+      </div>
+      <ul class="map-list" id="map-list">
+        <li class="map-item empty">暂无地图，点击上方按钮添加</li>
+      </ul>
+      <div class="panel-footer">共 <span id="map-count">0</span> 个地图</div>
+    </aside>
+
+    <!-- 右栏 -->
+    <main class="main-col">
+
+      <!-- 特征编辑卡片 -->
+      <section class="card" id="editor-card">
+        <div class="card-header">
+          <span id="editor-title">特征编辑 — 请选择一个地图</span>
+          <button id="btn-del-map" class="btn btn-sm btn-outline btn-danger-text" style="display:none">删除此地图</button>
+        </div>
+        <div class="card-body">
+
+          <!-- 地图名称行 -->
+          <div id="map-name-row" style="display:none">
+            <label class="field">
+              <span class="field-label">地图名称</span>
+              <input type="text" id="map-name-input" class="input" placeholder="输入地图名称">
+            </label>
+          </div>
+
+          <!-- 特征网格 -->
+          <div class="features-grid" id="features-grid">
+            <div class="features-empty" id="features-empty">
+              <div class="features-empty-icon">📋</div>
+              <div class="features-empty-text">选择左侧地图查看特征</div>
+            </div>
+          </div>
+
+          <div id="btn-add-feature-wrap" style="display:none; margin-top:12px;">
+            <button id="btn-add-feature" class="btn btn-outline btn-block">+ 新增特征</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 运行控制卡片 -->
+      <section class="card">
+        <div class="card-header">运行控制</div>
+        <div class="card-body">
+          <div class="ctrl-row">
+            <label class="ctrl-toggle">
+              <input type="checkbox" id="toggle-loop" checked>
+              <span>循环</span>
+            </label>
+            <label class="field field-sm field-inline">
+              <span class="field-label">最大轮次</span>
+              <input type="number" id="max-loops" class="input input-sm" value="0" min="0">
+              <span class="field-hint">0=无限</span>
+            </label>
+            <span class="sep"></span>
+            <button id="btn-run" class="btn btn-primary">▶ 运行</button>
+            <button id="btn-stop" class="btn btn-stop">■ 停止</button>
+            <button id="btn-save" class="btn btn-success">💾 保存</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 执行日志卡片 -->
+      <section class="card card-log">
+        <div class="card-header">
+          <span>执行日志</span>
+          <button id="btn-clear-log" class="btn btn-sm btn-outline">清空</button>
+        </div>
+        <div class="log-area" id="log-area">
+          <div class="log-line">就绪 — 等待操作</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══ Toast ═══ -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

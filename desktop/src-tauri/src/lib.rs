@@ -94,7 +94,7 @@ pub fn run() {
                                 // 重新启动
                                 match app
                                     .shell()
-                                    .sidecar("backend-x86_64-pc-windows-msvc")
+                                    .sidecar("backend")
                                     .map_err(|e| e.to_string())
                                     .and_then(|cmd| cmd.spawn().map_err(|e| e.to_string()))
                                 {
@@ -126,7 +126,7 @@ pub fn run() {
             // ── 启动后端子进程（sidecar） ──
             let sidecar_result = app
                 .shell()
-                .sidecar("backend-x86_64-pc-windows-msvc")
+                .sidecar("backend")
                 .map_err(|e| e.to_string())
                 .and_then(|cmd| cmd.spawn().map_err(|e| e.to_string()));
 

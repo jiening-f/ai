@@ -28,14 +28,14 @@
       "icons/icon.png"
     ],
     "externalBin": [
-      "backend-x86_64-pc-windows-gnu.exe"
+      "backend"
     ]
   },
   "plugins": {
     "shell": {
       "scope": [
         {
-          "name": "backend-x86_64-pc-windows-gnu",
+          "name": "backend",
           "sidecar": true,
           "args": true
         }
