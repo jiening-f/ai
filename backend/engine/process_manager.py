@@ -1,230 +1,276 @@
-"""
-进程生命周期管理器（单例）
-
-管理引擎子进程的创建、监控、终止。所有引擎操作统一通过此模块。
-"""
-import subprocess
+"""API 侧引擎进程生命周期管理器（单例）"""
 import json
 import os
-import time
-import threading
 import signal
-from pathlib import Path
-from typing import Optional
+import subprocess
+import sys
+import threading
+import time
+from typing import Any, Callable, Optional
+
+# ── 常量 ──
+_HEARTBEAT_TIMEOUT = 30       # 秒，超过此值判定引擎死亡
+_MAX_RETRIES = 3              # 崩溃后最大重试次数
+_HEARTBEAT_CHECK_INTERVAL = 10  # 心跳检查周期（秒）
+
+# ── 全局状态（模块级单例）──
+_lock = threading.Lock()
+_processes: dict[str, dict] = {}      # execution_id → 进程信息
+_heartbeats: dict[str, float] = {}    # execution_id → 最后心跳时间戳
+_shutdown_event = threading.Event()
 
 
-class EngineProcess:
-    """单个引擎进程的封装"""
+# ── 内部工具 ──
 
-    def __init__(self, execution_id: str, mode: str, process: subprocess.Popen):
-        self.execution_id = execution_id
-        self.mode = mode  # "script" | "node"
-        self.process = process
-        self.status = "running"  # running | done | error | stopped
-        self.started_at = time.time()
-        self.finished_at: Optional[float] = None
-        self.last_heartbeat = time.time()
-        self.error_message: Optional[str] = None
-        self.logs: list[str] = []
-
-    @property
-    def duration_ms(self) -> int:
-        end = self.finished_at or time.time()
-        return int((end - self.started_at) * 1000)
-
-    def is_alive(self) -> bool:
-        return self.process.poll() is None
+def _engine_script_path() -> str:
+    """返回 engine_process.py 的绝对路径"""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "engine_process.py")
 
 
-class ProcessManager:
-    """引擎进程管理器（单例）"""
+def _sanitize_config(config: dict) -> dict:
+    """
+    清洗配置中的不可序列化字段（例如数据库对象、回调函数）。
+    保留原始配置的副本供重试时使用。
+    """
+    safe = {}
+    for k, v in config.items():
+        if k in ("preset", "flow", "chain", "region", "hwnd",
+                 "override_max_runs", "override_ri", "game_hwnd"):
+            safe[k] = v
+    return safe
 
-    _instance = None
-    _lock = threading.Lock()
 
-    def __new__(cls):
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-                    cls._instance._initialized = False
-        return cls._instance
+# ── 公开 API ──
 
-    def __init__(self):
-        if self._initialized:
-            return
-        self._initialized = True
-        self._engines: dict[str, EngineProcess] = {}
-        self._next_id = 1
-        self._engine_lock = threading.Lock()
-        self._shutdown_flag = False
+def start_engine(
+    execution_id: int,
+    mode: str,
+    config: dict,
+    api_url: str = "http://127.0.0.1:8765",
+) -> dict:
+    """启动引擎独立子进程
 
-        # 心跳检测后台线程
-        self._hb_thread = threading.Thread(target=self._heartbeat_check, daemon=True)
-        self._hb_thread.start()
+    Args:
+        execution_id: 执行记录 ID
+        mode: "script" | "node"
+        config: 引擎配置字典
+        api_url: API 服务器地址
 
-    def _next_execution_id(self) -> str:
-        with self._engine_lock:
-            eid = f"engine-{self._next_id}"
-            self._next_id += 1
-        return eid
+    Returns:
+        {"status": "ok", "message": "..."} 或 {"status": "error", "message": "..."}
+    """
+    eid = str(execution_id)
+    with _lock:
+        if eid in _processes:
+            existing = _processes[eid]
+            if existing["process"].poll() is None:
+                return {
+                    "status": "error",
+                    "message": f"引擎 {execution_id} 已在运行 (PID: {existing['pid']})",
+                }
+            # 进程已退出，清理旧记录
+            _processes.pop(eid, None)
+            _heartbeats.pop(eid, None)
 
-    def start_engine(self, mode: str, preset_name: str = "", flow_json: str = "") -> EngineProcess:
-        """启动一个引擎子进程"""
-        execution_id = self._next_execution_id()
-        engine_py = os.path.join(os.path.dirname(os.path.abspath(__file__)), "engine_process.py")
+        config_json = json.dumps(config, ensure_ascii=False)
+        script_path = _engine_script_path()
 
-        cmd = [sys.executable, engine_py, "--mode", mode]
-        if preset_name:
-            cmd += ["--preset-name", preset_name]
-        if flow_json:
-            cmd += ["--flow-json", flow_json]
-
-        # 启动子进程（stdin/stdout 管道）
-        process = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
+        proc = subprocess.Popen(
+            [sys.executable, script_path,
+             "--api-url", api_url,
+             "--execution-id", str(execution_id),
+             "--mode", mode,
+             "--config", config_json],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1,  # 行缓冲
-            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # backend/
         )
 
-        ep = EngineProcess(execution_id, mode, process)
+        info = {
+            "process": proc,
+            "mode": mode,
+            "status": "starting",
+            "retries": 0,
+            "started_at": time.time(),
+            "pid": proc.pid,
+            "config": config,      # 保留以供重试
+            "api_url": api_url,
+        }
+        _processes[eid] = info
+        _heartbeats[eid] = time.time()
 
-        # 启动 stdout 读取线程
-        reader = threading.Thread(
-            target=self._read_stdout,
-            args=(ep,),
-            daemon=True,
-        )
-        reader.start()
+    return {"status": "ok", "message": f"引擎 {execution_id} 已启动 (PID: {proc.pid})"}
 
-        with self._engine_lock:
-            self._engines[execution_id] = ep
 
-        return ep
+def stop_engine(execution_id: int) -> dict:
+    """停止引擎子进程
 
-    def stop_engine(self, execution_id: str, timeout: float = 5.0) -> bool:
-        """停止指定的引擎进程"""
-        with self._engine_lock:
-            ep = self._engines.get(execution_id)
-            if not ep:
-                return False
+    先尝试优雅终止（SIGTERM），超时后强制杀死。
+    """
+    eid = str(execution_id)
+    with _lock:
+        info = _processes.get(eid)
+        if not info:
+            return {"status": "ok", "message": f"引擎 {execution_id} 不存在"}
 
-        if not ep.is_alive():
-            ep.status = "stopped"
-            ep.finished_at = time.time()
-            return True
+        proc = info["process"]
 
-        # 发送 stop 指令
+        # 检查进程是否已自行退出
+        if proc.poll() is not None:
+            _processes.pop(eid, None)
+            _heartbeats.pop(eid, None)
+            return {"status": "ok", "message": f"引擎 {execution_id} 已自行退出"}
+
         try:
-            stop_cmd = {"type": "stop"}
-            ep.process.stdin.write(json.dumps(stop_cmd) + "\n")
-            ep.process.stdin.flush()
-        except (BrokenPipeError, OSError):
-            pass
-
-        # 等待进程结束
-        try:
-            ep.process.wait(timeout=timeout)
+            if sys.platform == "win32":
+                proc.terminate()
+            else:
+                proc.send_signal(signal.SIGTERM)
+            proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
-            ep.process.kill()
-            ep.process.wait()
-
-        ep.status = "stopped"
-        ep.finished_at = time.time()
-        return True
-
-    def stop_all(self, timeout: float = 5.0):
-        """停止所有引擎进程"""
-        self._shutdown_flag = True
-        with self._engine_lock:
-            eids = list(self._engines.keys())
-        for eid in eids:
-            self.stop_engine(eid, timeout=timeout)
-
-    def get_engine(self, execution_id: str) -> Optional[EngineProcess]:
-        with self._engine_lock:
-            return self._engines.get(execution_id)
-
-    def list_engines(self) -> list[dict]:
-        with self._engine_lock:
-            return [
-                {
-                    "execution_id": ep.execution_id,
-                    "mode": ep.mode,
-                    "status": ep.status,
-                    "started_at": ep.started_at,
-                    "duration_ms": ep.duration_ms,
-                    "has_error": ep.error_message is not None,
-                }
-                for ep in self._engines.values()
-            ]
-
-    def _read_stdout(self, ep: EngineProcess):
-        """在后台线程读取子进程 stdout（JSON 行协议）"""
-        try:
-            for line in ep.process.stdout:
-                if self._shutdown_flag:
-                    break
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    msg = json.loads(line)
-                    self._handle_message(ep, msg)
-                except json.JSONDecodeError:
-                    ep.logs.append(f"[parse error] {line[:200]}")
-        except (IOError, OSError, ValueError):
+            proc.kill()
+            proc.wait(timeout=3)
+        except Exception:
             pass
-        finally:
-            # 进程结束，更新状态
-            ep.finished_at = time.time()
-            if ep.status == "running":
-                rc = ep.process.poll()
-                if rc is not None and rc != 0:
-                    ep.status = "error"
-                    ep.error_message = f"进程退出，code={rc}"
-                else:
-                    ep.status = "done"
 
-    def _handle_message(self, ep: EngineProcess, msg: dict):
-        """处理子进程发来的消息"""
-        msg_type = msg.get("type", "")
-        data = msg.get("data", "")
+        info["status"] = "stopped"
+        _processes.pop(eid, None)
+        _heartbeats.pop(eid, None)
 
-        if msg_type == "log":
-            ep.logs.append(str(data))
-
-        elif msg_type == "status":
-            ep.status = str(data)
-
-        elif msg_type == "heartbeat":
-            ep.last_heartbeat = time.time()
-
-        elif msg_type == "error":
-            ep.status = "error"
-            ep.error_message = str(data)
-
-        elif msg_type == "done":
-            ep.status = "done"
-            ep.finished_at = time.time()
-
-    def _heartbeat_check(self):
-        """后台心跳检测，超时 30 秒的进程标记为死亡"""
-        while not self._shutdown_flag:
-            time.sleep(10)
-            now = time.time()
-            with self._engine_lock:
-                for ep in list(self._engines.values()):
-                    if ep.status == "running" and (now - ep.last_heartbeat) > 30:
-                        if not ep.is_alive():
-                            ep.status = "error"
-                            ep.error_message = "心跳超时，进程已死亡"
-                            ep.finished_at = time.time()
+    return {"status": "ok", "message": f"引擎 {execution_id} 已停止"}
 
 
-# 全局单例
-manager = ProcessManager()
+def update_heartbeat(execution_id: int) -> None:
+    """更新心跳时间戳（由 WebSocket handler 在接收心跳时调用）"""
+    _heartbeats[str(execution_id)] = time.time()
+
+
+def update_status(execution_id: int, status: str) -> None:
+    """更新引擎状态（由 WebSocket handler 在收到状态变更时调用）"""
+    eid = str(execution_id)
+    with _lock:
+        info = _processes.get(eid)
+        if info:
+            info["status"] = status
+            if status in ("completed", "error", "stopped", "cancelled"):
+                _heartbeats.pop(eid, None)
+
+
+def get_engine_status(execution_id: int) -> Optional[dict]:
+    """查询指定引擎的状态"""
+    eid = str(execution_id)
+    with _lock:
+        info = _processes.get(eid)
+        if not info:
+            return None
+        proc = info["process"]
+        return_code = proc.poll()
+        return {
+            "execution_id": execution_id,
+            "mode": info["mode"],
+            "status": info["status"],
+            "pid": info["pid"],
+            "started_at": info["started_at"],
+            "retries": info["retries"],
+            "alive": return_code is None,
+            "return_code": return_code,
+        }
+
+
+def list_engines() -> list[dict]:
+    """列出所有活跃（或最近活跃）的引擎"""
+    with _lock:
+        return [
+            {
+                "execution_id": int(eid),
+                "mode": info["mode"],
+                "status": info["status"],
+                "pid": info["pid"],
+                "started_at": info["started_at"],
+                "retries": info["retries"],
+            }
+            for eid, info in _processes.items()
+        ]
+
+
+def shutdown_all() -> None:
+    """清理所有引擎进程（FastAPI lifespan 关闭时调用）"""
+    _shutdown_event.set()
+    for eid in list(_processes.keys()):
+        try:
+            stop_engine(int(eid))
+        except Exception:
+            pass
+
+
+# ══ 心跳检测后台线程 ══════════════════════════════
+
+def _check_heartbeats_loop() -> None:
+    """定期检查心跳，超时或死亡进程进行重试或清理"""
+    while not _shutdown_event.is_set():
+        _shutdown_event.wait(_HEARTBEAT_CHECK_INTERVAL)
+        if _shutdown_event.is_set():
+            break
+
+        now = time.time()
+        to_cleanup = []
+
+        with _lock:
+            for eid, last_beat in list(_heartbeats.items()):
+                info = _processes.get(eid)
+                if not info:
+                    continue
+
+                proc = info["process"]
+                return_code = proc.poll()
+
+                if return_code is not None:
+                    # 进程已退出
+                    if info["retries"] < _MAX_RETRIES:
+                        to_cleanup.append((eid, info, "crashed"))
+                    else:
+                        info["status"] = "failed"
+                        _heartbeats.pop(eid, None)
+                elif now - last_beat > _HEARTBEAT_TIMEOUT:
+                    # 心跳超时
+                    if info["retries"] < _MAX_RETRIES:
+                        to_cleanup.append((eid, info, "timeout"))
+                    else:
+                        info["status"] = "lost"
+                        _heartbeats.pop(eid, None)
+
+        for eid, info, reason in to_cleanup:
+            try:
+                proc = info["process"]
+                if proc.poll() is None:
+                    proc.kill()
+                    proc.wait(timeout=3)
+            except Exception:
+                pass
+
+            info["retries"] += 1
+            info["status"] = f"restarting (retry {info['retries']}/{_MAX_RETRIES})"
+
+            # 重试：重新启动子进程
+            try:
+                result = start_engine(
+                    execution_id=int(eid),
+                    mode=info["mode"],
+                    config=info["config"],
+                    api_url=info.get("api_url", "http://127.0.0.1:8765"),
+                )
+                if result["status"] == "ok":
+                    with _lock:
+                        if eid in _processes:
+                            _processes[eid]["retries"] = info["retries"]
+            except Exception as exc:
+                print(f"[process_manager] 重试引擎 {eid} 失败: {exc}", file=sys.stderr)
+
+
+# 启动后台心跳检查
+_heartbeat_thread = threading.Thread(
+    target=_check_heartbeats_loop,
+    daemon=True,
+    name="engine-hb-checker",
+)
+_heartbeat_thread.start()

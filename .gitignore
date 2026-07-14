@@ -6,3 +6,8 @@ dist/
 backend/data/
 *.spec
 build/
+
+# Tauri 桌面端
+desktop/node_modules/
+desktop/src-tauri/target/
+desktop/src-tauri/backend-x86_64-pc-windows-msvc.exe

@@ -3,13 +3,15 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-import json, os
+import json
+import os
+import random
 
-from engine.node_engine import (
-    NodeEngine, NodeFlow, MapConfig, FeatureNode,
-    DetectType, Decision
+from backend.engine.process_manager import (
+    start_engine,
+    stop_engine,
+    get_engine_status,
 )
-from engine.process_manager import manager
 
 router = APIRouter()
 
@@ -17,6 +19,9 @@ NODES_FILE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "data", "nodes.json"
 )
+
+# 当前节点引擎的 execution_id（简化方案，实际应由 DB 管理）
+_NODE_EXECUTION_ID: Optional[int] = None
 
 
 # ══ 请求模型 ══════════════════════════════════
@@ -74,48 +79,9 @@ def _dumps_nodes(flow: NodeFlowModel) -> dict:
     }
 
 
-def _parse_nodes(data: dict) -> NodeFlow:
-    """JSON 数据 → 领域模型 NodeFlow"""
-    flow = NodeFlow(
-        loop_enabled=data.get("loop_enabled", True),
-        max_loops=data.get("max_loops", 0),
-    )
-    for m_data in data.get("maps", []):
-        if not isinstance(m_data, dict):
-            continue
-        features = []
-        for f_data in m_data.get("features", []):
-            if not isinstance(f_data, dict):
-                continue
-            try:
-                dt = DetectType(f_data.get("detect_type", "text"))
-            except ValueError:
-                dt = DetectType.TEXT
-            try:
-                om = Decision(f_data.get("on_match", "continue"))
-            except ValueError:
-                om = Decision.CONTINUE
-            try:
-                omm = Decision(f_data.get("on_mismatch", "continue"))
-            except ValueError:
-                omm = Decision.CONTINUE
-
-            features.append(FeatureNode(
-                id=f_data.get("id", ""),
-                map_id=f_data.get("map_id", m_data.get("id", "")),
-                detect_type=dt,
-                detect_value=f_data.get("detect_value", ""),
-                on_match=om,
-                on_mismatch=omm,
-                enabled=f_data.get("enabled", True),
-            ))
-        flow.maps.append(MapConfig(
-            id=m_data.get("id", ""),
-            name=m_data.get("name", ""),
-            enabled=m_data.get("enabled", True),
-            features=features,
-        ))
-    return flow
+def _format_flow_data(data: NodeFlowModel) -> dict:
+    """将 NodeFlowModel 转为 engine_process 可接受的 flow 配置"""
+    return _dumps_nodes(data)
 
 
 # ══ 路由 ═══════════════════════════════════════
@@ -147,21 +113,37 @@ def save_nodes(data: NodeFlowModel):
 
 @router.post("/nodes/run")
 def run_nodes(data: NodeFlowModel):
-    """启动节点流程（使用独立子进程）"""
-    import json as _json
+    """启动节点流程 — 通过 EngineProcessManager 启动独立子进程"""
+    global _NODE_EXECUTION_ID
 
-    active = manager.list_engines()
-    for e in active:
-        if e["mode"] == "node" and e["status"] == "running":
+    # 检查是否已在运行
+    if _NODE_EXECUTION_ID is not None:
+        existing = get_engine_status(_NODE_EXECUTION_ID)
+        if existing and existing.get("alive"):
             raise HTTPException(409, "节点流程已在运行中")
 
-    flow_json = _json.dumps(_dumps_nodes(data), ensure_ascii=False)
-    ep = manager.start_engine(mode="node", flow_json=flow_json)
+    flow_data = _format_flow_data(data)
+    execution_id = random.randint(10000, 99999)
+    _NODE_EXECUTION_ID = execution_id
+
+    config = {
+        "flow": flow_data,
+    }
+
+    result = start_engine(
+        execution_id=execution_id,
+        mode="node",
+        config=config,
+    )
+
+    if result["status"] == "error":
+        _NODE_EXECUTION_ID = None
+        raise HTTPException(500, result["message"])
 
     return {
         "status": "ok",
         "message": "流程已启动",
-        "execution_id": ep.execution_id,
+        "execution_id": execution_id,
         "loop_enabled": data.loop_enabled,
         "max_loops": data.max_loops,
     }
@@ -169,13 +151,11 @@ def run_nodes(data: NodeFlowModel):
 
 @router.post("/nodes/stop")
 def stop_nodes():
-    """停止所有节点引擎"""
-    engines = manager.list_engines()
-    stopped = []
-    for e in engines:
-        if e["mode"] == "node" and e["status"] == "running":
-            manager.stop_engine(e["execution_id"])
-            stopped.append(e["execution_id"])
-    if not stopped:
-        return {"status": "ok", "message": "没有运行中的节点流程"}
-    return {"status": "ok", "message": f"已停止 {len(stopped)} 个节点引擎", "stopped": stopped}
+    """停止节点流程"""
+    global _NODE_EXECUTION_ID
+    if _NODE_EXECUTION_ID is None:
+        return {"status": "ok", "message": "没有正在运行的节点流程"}
+
+    result = stop_engine(_NODE_EXECUTION_ID)
+    _NODE_EXECUTION_ID = None
+    return {"status": "ok", "message": result["message"]}

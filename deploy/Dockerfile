@@ -28,7 +28,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 安装运行时所需系统库（OpenCV、OCR 等）
+# 安装运行时所需系统库（OpenCV、OCR、健康检查等）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1-mesa-glx \
     libglib2.0-0 \
@@ -36,6 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender-dev \
     libgomp1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制 Python 依赖

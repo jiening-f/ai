@@ -1,0 +1,65 @@
+import { NavLink } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+
+interface NavItem {
+  path: string
+  label: string
+  icon: string
+}
+
+const navItems: NavItem[] = [
+  { path: '/', label: '仪表盘', icon: '📊' },
+  { path: '/games', label: '游戏管理', icon: '🎮' },
+  { path: '/presets/0', label: '预设编辑', icon: '📝' },
+  { path: '/flow/0', label: '流程编辑', icon: '🔀' },
+  { path: '/history', label: '执行历史', icon: '📋' },
+  { path: '/plugins', label: '插件管理', icon: '🧩' },
+  { path: '/settings', label: '系统设置', icon: '⚙️' },
+]
+
+function Sidebar() {
+  const getInitialTheme = () => {
+    const saved = localStorage.getItem('theme')
+    if (saved === 'light' || saved === 'dark') return saved
+    return 'dark'
+  }
+  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-header">
+        <div className="sidebar-logo">全能脚本</div>
+      </div>
+      <nav className="sidebar-nav">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === '/'}
+            className={({ isActive }) =>
+              `sidebar-link${isActive ? ' active' : ''}`
+            }
+          >
+            <span className="sidebar-icon">{item.icon}</span>
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+      <div className="sidebar-footer">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? '切换亮色主题' : '切换暗色主题'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+          <span>{theme === 'dark' ? '亮色主题' : '暗色主题'}</span>
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+export default Sidebar

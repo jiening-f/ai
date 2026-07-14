@@ -12,7 +12,7 @@ services:
       - ../backend/data:/app/data
     environment:
       - DATABASE_PATH=/app/data/game_tool.db
-      - CORS_ORIGINS=http://localhost:5173
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:8765
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8765/api/health"]
