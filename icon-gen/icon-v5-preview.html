@@ -1,0 +1,853 @@
+<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#e8dcc8;display:flex;flex-direction:column;align-items:center;padding:40px;gap:30px;}.header{text-align:center;margin-bottom:10px;}.header h1{color:#6a5a45;font-family:Arial;font-size:24px;}.header p{color:#b8a890;font-family:Arial;font-size:13px;margin-top:6px;}.icon512{width:512px;height:512px;border-radius:96px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:inline-block;}.icon128{width:128px;height:128px;border-radius:24px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,0.1);display:inline-block;}.row{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;}.card{text-align:center;}.card p{color:#8a7a60;font-family:Arial;font-size:12px;margin-top:6px;}</style></head><body><div class="header"><h1>游戏全能脚本 — v5</h1><p>浓密花朵 · 极浅暖色背景 · 15°倾斜 · 居中</p></div><div class="icon512"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- 背景渐变 — 极浅暖色画布 -->
+    <radialGradient id="bgGrad" cx="45%" cy="38%" r="82%">
+      <stop offset="0%" stop-color="#fffcf5"/>
+      <stop offset="35%" stop-color="#fef2da"/>
+      <stop offset="100%" stop-color="#f5dfbd"/>
+    </radialGradient>
+
+    <!-- 背景层花瓣渐变（暗金色，在花头后方） -->
+    <linearGradient id="bPetal" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#7a5a1e"/>
+      <stop offset="100%" stop-color="#3d2810"/>
+    </linearGradient>
+
+    <!-- 中间层花瓣渐变（金色，主体） -->
+    <linearGradient id="mPetal1" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#d4a828"/>
+      <stop offset="45%" stop-color="#b8881e"/>
+      <stop offset="100%" stop-color="#806015"/>
+    </linearGradient>
+    <linearGradient id="mPetal2" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#e8c840"/>
+      <stop offset="50%" stop-color="#c49420"/>
+      <stop offset="100%" stop-color="#8a6815"/>
+    </linearGradient>
+
+    <!-- 前景层花瓣渐变（亮金色，焦点） -->
+    <linearGradient id="fPetal" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#f5d850"/>
+      <stop offset="35%" stop-color="#e8be30"/>
+      <stop offset="100%" stop-color="#b07a15"/>
+    </linearGradient>
+    <linearGradient id="fHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff5b0" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#ffe44d" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#d4a017" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fPetalTip" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe44d"/>
+      <stop offset="40%" stop-color="#f5c838"/>
+      <stop offset="100%" stop-color="#c48a18"/>
+    </linearGradient>
+    <linearGradient id="fPetalHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8d0" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#e8c040" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 花萼渐变 -->
+    <linearGradient id="sepalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a6a28"/>
+      <stop offset="100%" stop-color="#203a12"/>
+    </linearGradient>
+
+    <!-- 茎渐变 -->
+    <linearGradient id="stemGrad" x1="0%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#5a7a36"/>
+      <stop offset="50%" stop-color="#3a5820"/>
+      <stop offset="100%" stop-color="#1e3612"/>
+    </linearGradient>
+    <linearGradient id="stemHL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#789a48" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#3a5820" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 叶子渐变 -->
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6b8e28"/>
+      <stop offset="50%" stop-color="#4e6820"/>
+      <stop offset="100%" stop-color="#2a4015"/>
+    </linearGradient>
+    <linearGradient id="leafHL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8aac3e" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#4e6820" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 滤镜 -->
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3.5"/>
+      <feOffset dx="1.5" dy="3"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="deepShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="1" dy="4"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ===== 背景 ===== -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bgGrad)"/>
+
+  <!-- ===== 整个花朵 ===== -->
+  <!-- translate(44,28) 将花心从 (212,204) 移至 (256,232) 居中 -->
+  <!-- rotate(15) 顺时针旋转 15° 加大倾斜度 -->
+  <g transform="translate(44, 28) rotate(15, 212, 204)">
+
+    <!-- ===== 花茎 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M212 216 C212 300 207 355 197 440 L210 440 C215 355 220 300 218 216Z" fill="url(#stemGrad)"/>
+      <path d="M214 216 C214 300 210 355 202 440 C207 355 216 300 216 216Z" fill="url(#stemHL)"/>
+    </g>
+
+    <!-- ===== 叶子 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M209 335 C180 325 148 315 128 340 C145 358 178 355 209 345Z" fill="url(#leafGrad)"/>
+      <path d="M209 335 C180 325 148 315 128 340 C145 328 178 325 209 337Z" fill="url(#leafHL)"/>
+      <path d="M148 335 C155 330 170 328 190 338" stroke="#8aac3e" stroke-width="1" fill="none" opacity="0.3"/>
+    </g>
+    <g filter="url(#shadow)">
+      <path d="M203 385 C222 378 255 372 278 392 C265 410 235 400 200 396Z" fill="url(#leafGrad)"/>
+      <path d="M203 385 C222 378 255 372 278 392 C265 382 235 378 200 387Z" fill="url(#leafHL)"/>
+      <path d="M245 385 C238 380 225 378 210 388" stroke="#8aac3e" stroke-width="1" fill="none" opacity="0.3"/>
+    </g>
+
+    <!-- ===== 背景层花瓣（8片，更浓密） ===== -->
+    <g filter="url(#deepShadow)">
+      <!-- 后上左 -->
+      <path d="M195 200 C175 155 145 130 132 148 C148 168 172 185 195 200Z" fill="url(#bPetal)"/>
+      <!-- 左后 -->
+      <path d="M192 202 C158 180 120 175 112 192 C132 205 162 208 192 204Z" fill="url(#bPetal)"/>
+      <!-- 后上 -->
+      <path d="M198 196 C188 140 180 100 198 92 C208 120 210 160 202 198Z" fill="url(#bPetal)"/>
+      <!-- 后上右1 -->
+      <path d="M201 197 C208 138 220 102 240 95 C232 118 225 150 206 198Z" fill="url(#bPetal)"/>
+      <!-- 后上右2 -->
+      <path d="M204 196 C238 130 270 110 280 125 C258 148 232 172 208 198Z" fill="url(#bPetal)"/>
+      <!-- 后右 -->
+      <path d="M208 200 C268 145 310 155 305 170 C278 178 245 190 212 202Z" fill="url(#bPetal)"/>
+      <!-- 后右下 -->
+      <path d="M210 204 C275 175 320 200 318 220 C288 218 255 210 214 206Z" fill="url(#bPetal)"/>
+      <!-- 后下 -->
+      <path d="M206 208 C218 260 222 288 215 295 C208 280 200 250 204 210Z" fill="url(#bPetal)"/>
+    </g>
+
+    <!-- ===== 中间层花瓣（10片，更浓密） ===== -->
+    <g filter="url(#shadow)">
+      <!-- 正上 -->
+      <path d="M200 196 C200 130 208 88 222 82 C230 108 226 152 206 198Z" fill="url(#mPetal1)"/>
+      <!-- 中上右1 -->
+      <path d="M203 196 C222 118 248 90 268 86 C262 110 250 145 208 198Z" fill="url(#mPetal2)"/>
+      <!-- 右上 -->
+      <path d="M205 196 C246 112 282 88 298 106 C278 130 250 162 210 200Z" fill="url(#mPetal1)"/>
+      <!-- 右中1 -->
+      <path d="M208 198 C268 128 330 135 340 155 C312 168 272 185 213 200Z" fill="url(#mPetal2)"/>
+      <!-- 右 -->
+      <path d="M210 198 C300 130 348 145 355 165 C320 175 275 192 215 202Z" fill="url(#mPetal1)"/>
+      <!-- 右下1 -->
+      <path d="M212 202 C298 205 348 235 340 258 C312 248 270 228 215 206Z" fill="url(#mPetal2)"/>
+      <!-- 右下2 -->
+      <path d="M212 204 C300 220 355 255 342 278 C312 265 270 235 216 208Z" fill="url(#mPetal1)"/>
+      <!-- 下 -->
+      <path d="M208 210 C220 275 230 300 222 308 C212 298 202 260 205 214Z" fill="url(#mPetal2)"/>
+      <!-- 左下 -->
+      <path d="M202 208 C185 260 170 282 162 278 C172 258 186 232 200 210Z" fill="url(#mPetal1)"/>
+      <!-- 中下 -->
+      <path d="M206 210 C200 268 192 298 185 304 C194 288 200 252 204 212Z" fill="url(#mPetal2)"/>
+    </g>
+
+    <!-- ===== 前景层花瓣（8片，最亮，视觉焦点） ===== -->
+    <g filter="url(#shadow)">
+      <!-- 前右上1 -->
+      <path d="M207 196 C252 108 308 100 322 120 C292 138 252 168 212 200Z" fill="url(#fPetal)"/>
+      <path d="M210 196 C248 118 295 112 308 128 C284 140 250 165 214 199Z" fill="url(#fHighlight)"/>
+
+      <!-- 前右上2 -->
+      <path d="M208 198 C268 115 332 118 342 136 C312 152 270 175 214 200Z" fill="url(#fPetal)"/>
+      <path d="M210 198 C262 122 318 125 328 140 C302 152 264 172 215 200Z" fill="url(#fPetalHighlight)"/>
+
+      <!-- 前右（主花瓣） -->
+      <path d="M210 200 C288 148 358 165 365 188 C328 192 275 202 215 204Z" fill="url(#fPetal)"/>
+      <path d="M213 200 C278 155 338 170 345 185 C318 186 275 198 216 203Z" fill="url(#fHighlight)"/>
+
+      <!-- 前右下1 -->
+      <path d="M212 206 C275 240 338 272 328 295 C300 280 260 245 214 210Z" fill="url(#fPetalTip)"/>
+      <path d="M214 206 C268 238 322 268 315 285 C292 272 258 242 216 209Z" fill="url(#fHighlight)"/>
+
+      <!-- 前正右（最前方） -->
+      <path d="M210 202 C278 175 345 192 348 208 C315 210 262 210 214 206Z" fill="url(#fPetal)"/>
+      <path d="M212 202 C270 180 330 195 333 206 C305 206 260 207 215 205Z" fill="url(#fHighlight)"/>
+
+      <!-- 前下 -->
+      <path d="M210 210 C244 265 260 290 250 298 C238 282 222 250 206 214Z" fill="url(#fPetalTip)"/>
+
+      <!-- 前右下2 -->
+      <path d="M210 204 C275 255 310 288 300 305 C278 290 248 262 212 208Z" fill="url(#fPetalTip)"/>
+      <path d="M212 204 C268 252 298 282 290 296 C272 282 248 256 213 208Z" fill="url(#fHighlight)"/>
+
+      <!-- 前下2 -->
+      <path d="M208 212 C238 268 238 298 228 308 C220 292 212 260 206 214Z" fill="url(#fPetalTip)"/>
+    </g>
+
+    <!-- ===== 花萼 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M198 218 C192 235 195 252 207 258 C218 252 220 235 215 218Z" fill="url(#sepalGrad)"/>
+      <path d="M198 218 C195 228 198 238 207 242 C215 238 215 228 215 218Z" fill="#5a7a36" opacity="0.5"/>
+    </g>
+
+    <!-- ===== 花心深处（自然暗部阴影） ===== -->
+    <ellipse cx="212" cy="204" rx="8" ry="10" fill="#5a4020" opacity="0.4"/>
+
+  </g>
+
+  <!-- ===== 外框 ===== -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#c8b090" stroke-width="2.5"/>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#dcc8aa" stroke-width="0.8" opacity="0.6"/>
+</svg>
+</div><div class="row"><div class="card"><div class="icon128"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- 背景渐变 — 极浅暖色画布 -->
+    <radialGradient id="bgGrad" cx="45%" cy="38%" r="82%">
+      <stop offset="0%" stop-color="#fffcf5"/>
+      <stop offset="35%" stop-color="#fef2da"/>
+      <stop offset="100%" stop-color="#f5dfbd"/>
+    </radialGradient>
+
+    <!-- 背景层花瓣渐变（暗金色，在花头后方） -->
+    <linearGradient id="bPetal" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#7a5a1e"/>
+      <stop offset="100%" stop-color="#3d2810"/>
+    </linearGradient>
+
+    <!-- 中间层花瓣渐变（金色，主体） -->
+    <linearGradient id="mPetal1" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#d4a828"/>
+      <stop offset="45%" stop-color="#b8881e"/>
+      <stop offset="100%" stop-color="#806015"/>
+    </linearGradient>
+    <linearGradient id="mPetal2" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#e8c840"/>
+      <stop offset="50%" stop-color="#c49420"/>
+      <stop offset="100%" stop-color="#8a6815"/>
+    </linearGradient>
+
+    <!-- 前景层花瓣渐变（亮金色，焦点） -->
+    <linearGradient id="fPetal" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#f5d850"/>
+      <stop offset="35%" stop-color="#e8be30"/>
+      <stop offset="100%" stop-color="#b07a15"/>
+    </linearGradient>
+    <linearGradient id="fHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff5b0" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#ffe44d" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#d4a017" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fPetalTip" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe44d"/>
+      <stop offset="40%" stop-color="#f5c838"/>
+      <stop offset="100%" stop-color="#c48a18"/>
+    </linearGradient>
+    <linearGradient id="fPetalHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8d0" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#e8c040" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 花萼渐变 -->
+    <linearGradient id="sepalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a6a28"/>
+      <stop offset="100%" stop-color="#203a12"/>
+    </linearGradient>
+
+    <!-- 茎渐变 -->
+    <linearGradient id="stemGrad" x1="0%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#5a7a36"/>
+      <stop offset="50%" stop-color="#3a5820"/>
+      <stop offset="100%" stop-color="#1e3612"/>
+    </linearGradient>
+    <linearGradient id="stemHL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#789a48" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#3a5820" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 叶子渐变 -->
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6b8e28"/>
+      <stop offset="50%" stop-color="#4e6820"/>
+      <stop offset="100%" stop-color="#2a4015"/>
+    </linearGradient>
+    <linearGradient id="leafHL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8aac3e" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#4e6820" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 滤镜 -->
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3.5"/>
+      <feOffset dx="1.5" dy="3"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="deepShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="1" dy="4"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ===== 背景 ===== -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bgGrad)"/>
+
+  <!-- ===== 整个花朵 ===== -->
+  <!-- translate(44,28) 将花心从 (212,204) 移至 (256,232) 居中 -->
+  <!-- rotate(15) 顺时针旋转 15° 加大倾斜度 -->
+  <g transform="translate(44, 28) rotate(15, 212, 204)">
+
+    <!-- ===== 花茎 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M212 216 C212 300 207 355 197 440 L210 440 C215 355 220 300 218 216Z" fill="url(#stemGrad)"/>
+      <path d="M214 216 C214 300 210 355 202 440 C207 355 216 300 216 216Z" fill="url(#stemHL)"/>
+    </g>
+
+    <!-- ===== 叶子 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M209 335 C180 325 148 315 128 340 C145 358 178 355 209 345Z" fill="url(#leafGrad)"/>
+      <path d="M209 335 C180 325 148 315 128 340 C145 328 178 325 209 337Z" fill="url(#leafHL)"/>
+      <path d="M148 335 C155 330 170 328 190 338" stroke="#8aac3e" stroke-width="1" fill="none" opacity="0.3"/>
+    </g>
+    <g filter="url(#shadow)">
+      <path d="M203 385 C222 378 255 372 278 392 C265 410 235 400 200 396Z" fill="url(#leafGrad)"/>
+      <path d="M203 385 C222 378 255 372 278 392 C265 382 235 378 200 387Z" fill="url(#leafHL)"/>
+      <path d="M245 385 C238 380 225 378 210 388" stroke="#8aac3e" stroke-width="1" fill="none" opacity="0.3"/>
+    </g>
+
+    <!-- ===== 背景层花瓣（8片，更浓密） ===== -->
+    <g filter="url(#deepShadow)">
+      <!-- 后上左 -->
+      <path d="M195 200 C175 155 145 130 132 148 C148 168 172 185 195 200Z" fill="url(#bPetal)"/>
+      <!-- 左后 -->
+      <path d="M192 202 C158 180 120 175 112 192 C132 205 162 208 192 204Z" fill="url(#bPetal)"/>
+      <!-- 后上 -->
+      <path d="M198 196 C188 140 180 100 198 92 C208 120 210 160 202 198Z" fill="url(#bPetal)"/>
+      <!-- 后上右1 -->
+      <path d="M201 197 C208 138 220 102 240 95 C232 118 225 150 206 198Z" fill="url(#bPetal)"/>
+      <!-- 后上右2 -->
+      <path d="M204 196 C238 130 270 110 280 125 C258 148 232 172 208 198Z" fill="url(#bPetal)"/>
+      <!-- 后右 -->
+      <path d="M208 200 C268 145 310 155 305 170 C278 178 245 190 212 202Z" fill="url(#bPetal)"/>
+      <!-- 后右下 -->
+      <path d="M210 204 C275 175 320 200 318 220 C288 218 255 210 214 206Z" fill="url(#bPetal)"/>
+      <!-- 后下 -->
+      <path d="M206 208 C218 260 222 288 215 295 C208 280 200 250 204 210Z" fill="url(#bPetal)"/>
+    </g>
+
+    <!-- ===== 中间层花瓣（10片，更浓密） ===== -->
+    <g filter="url(#shadow)">
+      <!-- 正上 -->
+      <path d="M200 196 C200 130 208 88 222 82 C230 108 226 152 206 198Z" fill="url(#mPetal1)"/>
+      <!-- 中上右1 -->
+      <path d="M203 196 C222 118 248 90 268 86 C262 110 250 145 208 198Z" fill="url(#mPetal2)"/>
+      <!-- 右上 -->
+      <path d="M205 196 C246 112 282 88 298 106 C278 130 250 162 210 200Z" fill="url(#mPetal1)"/>
+      <!-- 右中1 -->
+      <path d="M208 198 C268 128 330 135 340 155 C312 168 272 185 213 200Z" fill="url(#mPetal2)"/>
+      <!-- 右 -->
+      <path d="M210 198 C300 130 348 145 355 165 C320 175 275 192 215 202Z" fill="url(#mPetal1)"/>
+      <!-- 右下1 -->
+      <path d="M212 202 C298 205 348 235 340 258 C312 248 270 228 215 206Z" fill="url(#mPetal2)"/>
+      <!-- 右下2 -->
+      <path d="M212 204 C300 220 355 255 342 278 C312 265 270 235 216 208Z" fill="url(#mPetal1)"/>
+      <!-- 下 -->
+      <path d="M208 210 C220 275 230 300 222 308 C212 298 202 260 205 214Z" fill="url(#mPetal2)"/>
+      <!-- 左下 -->
+      <path d="M202 208 C185 260 170 282 162 278 C172 258 186 232 200 210Z" fill="url(#mPetal1)"/>
+      <!-- 中下 -->
+      <path d="M206 210 C200 268 192 298 185 304 C194 288 200 252 204 212Z" fill="url(#mPetal2)"/>
+    </g>
+
+    <!-- ===== 前景层花瓣（8片，最亮，视觉焦点） ===== -->
+    <g filter="url(#shadow)">
+      <!-- 前右上1 -->
+      <path d="M207 196 C252 108 308 100 322 120 C292 138 252 168 212 200Z" fill="url(#fPetal)"/>
+      <path d="M210 196 C248 118 295 112 308 128 C284 140 250 165 214 199Z" fill="url(#fHighlight)"/>
+
+      <!-- 前右上2 -->
+      <path d="M208 198 C268 115 332 118 342 136 C312 152 270 175 214 200Z" fill="url(#fPetal)"/>
+      <path d="M210 198 C262 122 318 125 328 140 C302 152 264 172 215 200Z" fill="url(#fPetalHighlight)"/>
+
+      <!-- 前右（主花瓣） -->
+      <path d="M210 200 C288 148 358 165 365 188 C328 192 275 202 215 204Z" fill="url(#fPetal)"/>
+      <path d="M213 200 C278 155 338 170 345 185 C318 186 275 198 216 203Z" fill="url(#fHighlight)"/>
+
+      <!-- 前右下1 -->
+      <path d="M212 206 C275 240 338 272 328 295 C300 280 260 245 214 210Z" fill="url(#fPetalTip)"/>
+      <path d="M214 206 C268 238 322 268 315 285 C292 272 258 242 216 209Z" fill="url(#fHighlight)"/>
+
+      <!-- 前正右（最前方） -->
+      <path d="M210 202 C278 175 345 192 348 208 C315 210 262 210 214 206Z" fill="url(#fPetal)"/>
+      <path d="M212 202 C270 180 330 195 333 206 C305 206 260 207 215 205Z" fill="url(#fHighlight)"/>
+
+      <!-- 前下 -->
+      <path d="M210 210 C244 265 260 290 250 298 C238 282 222 250 206 214Z" fill="url(#fPetalTip)"/>
+
+      <!-- 前右下2 -->
+      <path d="M210 204 C275 255 310 288 300 305 C278 290 248 262 212 208Z" fill="url(#fPetalTip)"/>
+      <path d="M212 204 C268 252 298 282 290 296 C272 282 248 256 213 208Z" fill="url(#fHighlight)"/>
+
+      <!-- 前下2 -->
+      <path d="M208 212 C238 268 238 298 228 308 C220 292 212 260 206 214Z" fill="url(#fPetalTip)"/>
+    </g>
+
+    <!-- ===== 花萼 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M198 218 C192 235 195 252 207 258 C218 252 220 235 215 218Z" fill="url(#sepalGrad)"/>
+      <path d="M198 218 C195 228 198 238 207 242 C215 238 215 228 215 218Z" fill="#5a7a36" opacity="0.5"/>
+    </g>
+
+    <!-- ===== 花心深处（自然暗部阴影） ===== -->
+    <ellipse cx="212" cy="204" rx="8" ry="10" fill="#5a4020" opacity="0.4"/>
+
+  </g>
+
+  <!-- ===== 外框 ===== -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#c8b090" stroke-width="2.5"/>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#dcc8aa" stroke-width="0.8" opacity="0.6"/>
+</svg>
+</div><p>128×128</p></div><div class="card"><div style="width:64px;height:64px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:inline-block;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- 背景渐变 — 极浅暖色画布 -->
+    <radialGradient id="bgGrad" cx="45%" cy="38%" r="82%">
+      <stop offset="0%" stop-color="#fffcf5"/>
+      <stop offset="35%" stop-color="#fef2da"/>
+      <stop offset="100%" stop-color="#f5dfbd"/>
+    </radialGradient>
+
+    <!-- 背景层花瓣渐变（暗金色，在花头后方） -->
+    <linearGradient id="bPetal" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#7a5a1e"/>
+      <stop offset="100%" stop-color="#3d2810"/>
+    </linearGradient>
+
+    <!-- 中间层花瓣渐变（金色，主体） -->
+    <linearGradient id="mPetal1" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#d4a828"/>
+      <stop offset="45%" stop-color="#b8881e"/>
+      <stop offset="100%" stop-color="#806015"/>
+    </linearGradient>
+    <linearGradient id="mPetal2" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#e8c840"/>
+      <stop offset="50%" stop-color="#c49420"/>
+      <stop offset="100%" stop-color="#8a6815"/>
+    </linearGradient>
+
+    <!-- 前景层花瓣渐变（亮金色，焦点） -->
+    <linearGradient id="fPetal" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#f5d850"/>
+      <stop offset="35%" stop-color="#e8be30"/>
+      <stop offset="100%" stop-color="#b07a15"/>
+    </linearGradient>
+    <linearGradient id="fHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff5b0" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#ffe44d" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#d4a017" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fPetalTip" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe44d"/>
+      <stop offset="40%" stop-color="#f5c838"/>
+      <stop offset="100%" stop-color="#c48a18"/>
+    </linearGradient>
+    <linearGradient id="fPetalHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8d0" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#e8c040" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 花萼渐变 -->
+    <linearGradient id="sepalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a6a28"/>
+      <stop offset="100%" stop-color="#203a12"/>
+    </linearGradient>
+
+    <!-- 茎渐变 -->
+    <linearGradient id="stemGrad" x1="0%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#5a7a36"/>
+      <stop offset="50%" stop-color="#3a5820"/>
+      <stop offset="100%" stop-color="#1e3612"/>
+    </linearGradient>
+    <linearGradient id="stemHL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#789a48" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#3a5820" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 叶子渐变 -->
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6b8e28"/>
+      <stop offset="50%" stop-color="#4e6820"/>
+      <stop offset="100%" stop-color="#2a4015"/>
+    </linearGradient>
+    <linearGradient id="leafHL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8aac3e" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#4e6820" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 滤镜 -->
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3.5"/>
+      <feOffset dx="1.5" dy="3"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="deepShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="1" dy="4"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ===== 背景 ===== -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bgGrad)"/>
+
+  <!-- ===== 整个花朵 ===== -->
+  <!-- translate(44,28) 将花心从 (212,204) 移至 (256,232) 居中 -->
+  <!-- rotate(15) 顺时针旋转 15° 加大倾斜度 -->
+  <g transform="translate(44, 28) rotate(15, 212, 204)">
+
+    <!-- ===== 花茎 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M212 216 C212 300 207 355 197 440 L210 440 C215 355 220 300 218 216Z" fill="url(#stemGrad)"/>
+      <path d="M214 216 C214 300 210 355 202 440 C207 355 216 300 216 216Z" fill="url(#stemHL)"/>
+    </g>
+
+    <!-- ===== 叶子 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M209 335 C180 325 148 315 128 340 C145 358 178 355 209 345Z" fill="url(#leafGrad)"/>
+      <path d="M209 335 C180 325 148 315 128 340 C145 328 178 325 209 337Z" fill="url(#leafHL)"/>
+      <path d="M148 335 C155 330 170 328 190 338" stroke="#8aac3e" stroke-width="1" fill="none" opacity="0.3"/>
+    </g>
+    <g filter="url(#shadow)">
+      <path d="M203 385 C222 378 255 372 278 392 C265 410 235 400 200 396Z" fill="url(#leafGrad)"/>
+      <path d="M203 385 C222 378 255 372 278 392 C265 382 235 378 200 387Z" fill="url(#leafHL)"/>
+      <path d="M245 385 C238 380 225 378 210 388" stroke="#8aac3e" stroke-width="1" fill="none" opacity="0.3"/>
+    </g>
+
+    <!-- ===== 背景层花瓣（8片，更浓密） ===== -->
+    <g filter="url(#deepShadow)">
+      <!-- 后上左 -->
+      <path d="M195 200 C175 155 145 130 132 148 C148 168 172 185 195 200Z" fill="url(#bPetal)"/>
+      <!-- 左后 -->
+      <path d="M192 202 C158 180 120 175 112 192 C132 205 162 208 192 204Z" fill="url(#bPetal)"/>
+      <!-- 后上 -->
+      <path d="M198 196 C188 140 180 100 198 92 C208 120 210 160 202 198Z" fill="url(#bPetal)"/>
+      <!-- 后上右1 -->
+      <path d="M201 197 C208 138 220 102 240 95 C232 118 225 150 206 198Z" fill="url(#bPetal)"/>
+      <!-- 后上右2 -->
+      <path d="M204 196 C238 130 270 110 280 125 C258 148 232 172 208 198Z" fill="url(#bPetal)"/>
+      <!-- 后右 -->
+      <path d="M208 200 C268 145 310 155 305 170 C278 178 245 190 212 202Z" fill="url(#bPetal)"/>
+      <!-- 后右下 -->
+      <path d="M210 204 C275 175 320 200 318 220 C288 218 255 210 214 206Z" fill="url(#bPetal)"/>
+      <!-- 后下 -->
+      <path d="M206 208 C218 260 222 288 215 295 C208 280 200 250 204 210Z" fill="url(#bPetal)"/>
+    </g>
+
+    <!-- ===== 中间层花瓣（10片，更浓密） ===== -->
+    <g filter="url(#shadow)">
+      <!-- 正上 -->
+      <path d="M200 196 C200 130 208 88 222 82 C230 108 226 152 206 198Z" fill="url(#mPetal1)"/>
+      <!-- 中上右1 -->
+      <path d="M203 196 C222 118 248 90 268 86 C262 110 250 145 208 198Z" fill="url(#mPetal2)"/>
+      <!-- 右上 -->
+      <path d="M205 196 C246 112 282 88 298 106 C278 130 250 162 210 200Z" fill="url(#mPetal1)"/>
+      <!-- 右中1 -->
+      <path d="M208 198 C268 128 330 135 340 155 C312 168 272 185 213 200Z" fill="url(#mPetal2)"/>
+      <!-- 右 -->
+      <path d="M210 198 C300 130 348 145 355 165 C320 175 275 192 215 202Z" fill="url(#mPetal1)"/>
+      <!-- 右下1 -->
+      <path d="M212 202 C298 205 348 235 340 258 C312 248 270 228 215 206Z" fill="url(#mPetal2)"/>
+      <!-- 右下2 -->
+      <path d="M212 204 C300 220 355 255 342 278 C312 265 270 235 216 208Z" fill="url(#mPetal1)"/>
+      <!-- 下 -->
+      <path d="M208 210 C220 275 230 300 222 308 C212 298 202 260 205 214Z" fill="url(#mPetal2)"/>
+      <!-- 左下 -->
+      <path d="M202 208 C185 260 170 282 162 278 C172 258 186 232 200 210Z" fill="url(#mPetal1)"/>
+      <!-- 中下 -->
+      <path d="M206 210 C200 268 192 298 185 304 C194 288 200 252 204 212Z" fill="url(#mPetal2)"/>
+    </g>
+
+    <!-- ===== 前景层花瓣（8片，最亮，视觉焦点） ===== -->
+    <g filter="url(#shadow)">
+      <!-- 前右上1 -->
+      <path d="M207 196 C252 108 308 100 322 120 C292 138 252 168 212 200Z" fill="url(#fPetal)"/>
+      <path d="M210 196 C248 118 295 112 308 128 C284 140 250 165 214 199Z" fill="url(#fHighlight)"/>
+
+      <!-- 前右上2 -->
+      <path d="M208 198 C268 115 332 118 342 136 C312 152 270 175 214 200Z" fill="url(#fPetal)"/>
+      <path d="M210 198 C262 122 318 125 328 140 C302 152 264 172 215 200Z" fill="url(#fPetalHighlight)"/>
+
+      <!-- 前右（主花瓣） -->
+      <path d="M210 200 C288 148 358 165 365 188 C328 192 275 202 215 204Z" fill="url(#fPetal)"/>
+      <path d="M213 200 C278 155 338 170 345 185 C318 186 275 198 216 203Z" fill="url(#fHighlight)"/>
+
+      <!-- 前右下1 -->
+      <path d="M212 206 C275 240 338 272 328 295 C300 280 260 245 214 210Z" fill="url(#fPetalTip)"/>
+      <path d="M214 206 C268 238 322 268 315 285 C292 272 258 242 216 209Z" fill="url(#fHighlight)"/>
+
+      <!-- 前正右（最前方） -->
+      <path d="M210 202 C278 175 345 192 348 208 C315 210 262 210 214 206Z" fill="url(#fPetal)"/>
+      <path d="M212 202 C270 180 330 195 333 206 C305 206 260 207 215 205Z" fill="url(#fHighlight)"/>
+
+      <!-- 前下 -->
+      <path d="M210 210 C244 265 260 290 250 298 C238 282 222 250 206 214Z" fill="url(#fPetalTip)"/>
+
+      <!-- 前右下2 -->
+      <path d="M210 204 C275 255 310 288 300 305 C278 290 248 262 212 208Z" fill="url(#fPetalTip)"/>
+      <path d="M212 204 C268 252 298 282 290 296 C272 282 248 256 213 208Z" fill="url(#fHighlight)"/>
+
+      <!-- 前下2 -->
+      <path d="M208 212 C238 268 238 298 228 308 C220 292 212 260 206 214Z" fill="url(#fPetalTip)"/>
+    </g>
+
+    <!-- ===== 花萼 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M198 218 C192 235 195 252 207 258 C218 252 220 235 215 218Z" fill="url(#sepalGrad)"/>
+      <path d="M198 218 C195 228 198 238 207 242 C215 238 215 228 215 218Z" fill="#5a7a36" opacity="0.5"/>
+    </g>
+
+    <!-- ===== 花心深处（自然暗部阴影） ===== -->
+    <ellipse cx="212" cy="204" rx="8" ry="10" fill="#5a4020" opacity="0.4"/>
+
+  </g>
+
+  <!-- ===== 外框 ===== -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#c8b090" stroke-width="2.5"/>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#dcc8aa" stroke-width="0.8" opacity="0.6"/>
+</svg>
+</div><p>64×64</p></div><div class="card"><div style="width:48px;height:48px;border-radius:9px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.08);display:inline-block;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- 背景渐变 — 极浅暖色画布 -->
+    <radialGradient id="bgGrad" cx="45%" cy="38%" r="82%">
+      <stop offset="0%" stop-color="#fffcf5"/>
+      <stop offset="35%" stop-color="#fef2da"/>
+      <stop offset="100%" stop-color="#f5dfbd"/>
+    </radialGradient>
+
+    <!-- 背景层花瓣渐变（暗金色，在花头后方） -->
+    <linearGradient id="bPetal" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#7a5a1e"/>
+      <stop offset="100%" stop-color="#3d2810"/>
+    </linearGradient>
+
+    <!-- 中间层花瓣渐变（金色，主体） -->
+    <linearGradient id="mPetal1" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#d4a828"/>
+      <stop offset="45%" stop-color="#b8881e"/>
+      <stop offset="100%" stop-color="#806015"/>
+    </linearGradient>
+    <linearGradient id="mPetal2" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#e8c840"/>
+      <stop offset="50%" stop-color="#c49420"/>
+      <stop offset="100%" stop-color="#8a6815"/>
+    </linearGradient>
+
+    <!-- 前景层花瓣渐变（亮金色，焦点） -->
+    <linearGradient id="fPetal" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#f5d850"/>
+      <stop offset="35%" stop-color="#e8be30"/>
+      <stop offset="100%" stop-color="#b07a15"/>
+    </linearGradient>
+    <linearGradient id="fHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff5b0" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#ffe44d" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#d4a017" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fPetalTip" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe44d"/>
+      <stop offset="40%" stop-color="#f5c838"/>
+      <stop offset="100%" stop-color="#c48a18"/>
+    </linearGradient>
+    <linearGradient id="fPetalHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8d0" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#e8c040" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 花萼渐变 -->
+    <linearGradient id="sepalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a6a28"/>
+      <stop offset="100%" stop-color="#203a12"/>
+    </linearGradient>
+
+    <!-- 茎渐变 -->
+    <linearGradient id="stemGrad" x1="0%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#5a7a36"/>
+      <stop offset="50%" stop-color="#3a5820"/>
+      <stop offset="100%" stop-color="#1e3612"/>
+    </linearGradient>
+    <linearGradient id="stemHL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#789a48" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#3a5820" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 叶子渐变 -->
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6b8e28"/>
+      <stop offset="50%" stop-color="#4e6820"/>
+      <stop offset="100%" stop-color="#2a4015"/>
+    </linearGradient>
+    <linearGradient id="leafHL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8aac3e" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#4e6820" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 滤镜 -->
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3.5"/>
+      <feOffset dx="1.5" dy="3"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.4 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="deepShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="1" dy="4"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ===== 背景 ===== -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bgGrad)"/>
+
+  <!-- ===== 整个花朵 ===== -->
+  <!-- translate(44,28) 将花心从 (212,204) 移至 (256,232) 居中 -->
+  <!-- rotate(15) 顺时针旋转 15° 加大倾斜度 -->
+  <g transform="translate(44, 28) rotate(15, 212, 204)">
+
+    <!-- ===== 花茎 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M212 216 C212 300 207 355 197 440 L210 440 C215 355 220 300 218 216Z" fill="url(#stemGrad)"/>
+      <path d="M214 216 C214 300 210 355 202 440 C207 355 216 300 216 216Z" fill="url(#stemHL)"/>
+    </g>
+
+    <!-- ===== 叶子 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M209 335 C180 325 148 315 128 340 C145 358 178 355 209 345Z" fill="url(#leafGrad)"/>
+      <path d="M209 335 C180 325 148 315 128 340 C145 328 178 325 209 337Z" fill="url(#leafHL)"/>
+      <path d="M148 335 C155 330 170 328 190 338" stroke="#8aac3e" stroke-width="1" fill="none" opacity="0.3"/>
+    </g>
+    <g filter="url(#shadow)">
+      <path d="M203 385 C222 378 255 372 278 392 C265 410 235 400 200 396Z" fill="url(#leafGrad)"/>
+      <path d="M203 385 C222 378 255 372 278 392 C265 382 235 378 200 387Z" fill="url(#leafHL)"/>
+      <path d="M245 385 C238 380 225 378 210 388" stroke="#8aac3e" stroke-width="1" fill="none" opacity="0.3"/>
+    </g>
+
+    <!-- ===== 背景层花瓣（8片，更浓密） ===== -->
+    <g filter="url(#deepShadow)">
+      <!-- 后上左 -->
+      <path d="M195 200 C175 155 145 130 132 148 C148 168 172 185 195 200Z" fill="url(#bPetal)"/>
+      <!-- 左后 -->
+      <path d="M192 202 C158 180 120 175 112 192 C132 205 162 208 192 204Z" fill="url(#bPetal)"/>
+      <!-- 后上 -->
+      <path d="M198 196 C188 140 180 100 198 92 C208 120 210 160 202 198Z" fill="url(#bPetal)"/>
+      <!-- 后上右1 -->
+      <path d="M201 197 C208 138 220 102 240 95 C232 118 225 150 206 198Z" fill="url(#bPetal)"/>
+      <!-- 后上右2 -->
+      <path d="M204 196 C238 130 270 110 280 125 C258 148 232 172 208 198Z" fill="url(#bPetal)"/>
+      <!-- 后右 -->
+      <path d="M208 200 C268 145 310 155 305 170 C278 178 245 190 212 202Z" fill="url(#bPetal)"/>
+      <!-- 后右下 -->
+      <path d="M210 204 C275 175 320 200 318 220 C288 218 255 210 214 206Z" fill="url(#bPetal)"/>
+      <!-- 后下 -->
+      <path d="M206 208 C218 260 222 288 215 295 C208 280 200 250 204 210Z" fill="url(#bPetal)"/>
+    </g>
+
+    <!-- ===== 中间层花瓣（10片，更浓密） ===== -->
+    <g filter="url(#shadow)">
+      <!-- 正上 -->
+      <path d="M200 196 C200 130 208 88 222 82 C230 108 226 152 206 198Z" fill="url(#mPetal1)"/>
+      <!-- 中上右1 -->
+      <path d="M203 196 C222 118 248 90 268 86 C262 110 250 145 208 198Z" fill="url(#mPetal2)"/>
+      <!-- 右上 -->
+      <path d="M205 196 C246 112 282 88 298 106 C278 130 250 162 210 200Z" fill="url(#mPetal1)"/>
+      <!-- 右中1 -->
+      <path d="M208 198 C268 128 330 135 340 155 C312 168 272 185 213 200Z" fill="url(#mPetal2)"/>
+      <!-- 右 -->
+      <path d="M210 198 C300 130 348 145 355 165 C320 175 275 192 215 202Z" fill="url(#mPetal1)"/>
+      <!-- 右下1 -->
+      <path d="M212 202 C298 205 348 235 340 258 C312 248 270 228 215 206Z" fill="url(#mPetal2)"/>
+      <!-- 右下2 -->
+      <path d="M212 204 C300 220 355 255 342 278 C312 265 270 235 216 208Z" fill="url(#mPetal1)"/>
+      <!-- 下 -->
+      <path d="M208 210 C220 275 230 300 222 308 C212 298 202 260 205 214Z" fill="url(#mPetal2)"/>
+      <!-- 左下 -->
+      <path d="M202 208 C185 260 170 282 162 278 C172 258 186 232 200 210Z" fill="url(#mPetal1)"/>
+      <!-- 中下 -->
+      <path d="M206 210 C200 268 192 298 185 304 C194 288 200 252 204 212Z" fill="url(#mPetal2)"/>
+    </g>
+
+    <!-- ===== 前景层花瓣（8片，最亮，视觉焦点） ===== -->
+    <g filter="url(#shadow)">
+      <!-- 前右上1 -->
+      <path d="M207 196 C252 108 308 100 322 120 C292 138 252 168 212 200Z" fill="url(#fPetal)"/>
+      <path d="M210 196 C248 118 295 112 308 128 C284 140 250 165 214 199Z" fill="url(#fHighlight)"/>
+
+      <!-- 前右上2 -->
+      <path d="M208 198 C268 115 332 118 342 136 C312 152 270 175 214 200Z" fill="url(#fPetal)"/>
+      <path d="M210 198 C262 122 318 125 328 140 C302 152 264 172 215 200Z" fill="url(#fPetalHighlight)"/>
+
+      <!-- 前右（主花瓣） -->
+      <path d="M210 200 C288 148 358 165 365 188 C328 192 275 202 215 204Z" fill="url(#fPetal)"/>
+      <path d="M213 200 C278 155 338 170 345 185 C318 186 275 198 216 203Z" fill="url(#fHighlight)"/>
+
+      <!-- 前右下1 -->
+      <path d="M212 206 C275 240 338 272 328 295 C300 280 260 245 214 210Z" fill="url(#fPetalTip)"/>
+      <path d="M214 206 C268 238 322 268 315 285 C292 272 258 242 216 209Z" fill="url(#fHighlight)"/>
+
+      <!-- 前正右（最前方） -->
+      <path d="M210 202 C278 175 345 192 348 208 C315 210 262 210 214 206Z" fill="url(#fPetal)"/>
+      <path d="M212 202 C270 180 330 195 333 206 C305 206 260 207 215 205Z" fill="url(#fHighlight)"/>
+
+      <!-- 前下 -->
+      <path d="M210 210 C244 265 260 290 250 298 C238 282 222 250 206 214Z" fill="url(#fPetalTip)"/>
+
+      <!-- 前右下2 -->
+      <path d="M210 204 C275 255 310 288 300 305 C278 290 248 262 212 208Z" fill="url(#fPetalTip)"/>
+      <path d="M212 204 C268 252 298 282 290 296 C272 282 248 256 213 208Z" fill="url(#fHighlight)"/>
+
+      <!-- 前下2 -->
+      <path d="M208 212 C238 268 238 298 228 308 C220 292 212 260 206 214Z" fill="url(#fPetalTip)"/>
+    </g>
+
+    <!-- ===== 花萼 ===== -->
+    <g filter="url(#shadow)">
+      <path d="M198 218 C192 235 195 252 207 258 C218 252 220 235 215 218Z" fill="url(#sepalGrad)"/>
+      <path d="M198 218 C195 228 198 238 207 242 C215 238 215 228 215 218Z" fill="#5a7a36" opacity="0.5"/>
+    </g>
+
+    <!-- ===== 花心深处（自然暗部阴影） ===== -->
+    <ellipse cx="212" cy="204" rx="8" ry="10" fill="#5a4020" opacity="0.4"/>
+
+  </g>
+
+  <!-- ===== 外框 ===== -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#c8b090" stroke-width="2.5"/>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#dcc8aa" stroke-width="0.8" opacity="0.6"/>
+</svg>
+</div><p>48×48</p></div></div></body></html>
