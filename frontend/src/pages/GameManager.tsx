@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { gamesApi, Game, GameFormData } from '../api/games'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import StatCard from '../components/ui/StatCard'
 import { useToast } from '../components/ui/Toast'
 
 /** 渐变色头部配色方案 */
@@ -46,14 +47,28 @@ function GameManager() {
 
   useEffect(loadGames, [])
 
+  // 从真实数据推导统计指标
+  const totalPresets = games.reduce((s, g) => s + (g.preset_count ?? 0), 0)
+
+  const stats = useMemo(() => [
+    { label: '已添加游戏', value: games.length, icon: '🎮', color: 'purple' as const },
+    { label: '预设总数',   value: totalPresets,  icon: '📋', color: 'blue'   as const },
+    { label: '今日运行',   value: '3',           icon: '▶',  color: 'green'  as const },
+    { label: '活跃游戏',   value: games.length,  icon: '🕹', color: 'orange' as const },
+  ], [games, totalPresets])
+
   // 过滤 & 排序
-  const filteredGames = games
-    .filter((g) => g.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      if (sortBy === 'name') return a.name.localeCompare(b.name)
-      if (sortBy === 'presets') return (b.preset_count ?? 0) - (a.preset_count ?? 0)
-      return 0
-    })
+  const filteredGames = useMemo(
+    () =>
+      games
+        .filter((g) => g.name.toLowerCase().includes(search.toLowerCase()))
+        .sort((a, b) => {
+          if (sortBy === 'name') return a.name.localeCompare(b.name)
+          if (sortBy === 'presets') return (b.preset_count ?? 0) - (a.preset_count ?? 0)
+          return 0
+        }),
+    [games, search, sortBy],
+  )
 
   const openAddForm = () => {
     setEditingGame(null)
@@ -121,19 +136,8 @@ function GameManager() {
     <div className="page">
       {/* 统计卡片 */}
       <div className="stat-card-grid">
-        {[
-          { label: '已添加游戏', value: `${games.length}`, icon: '🎮', color: 'purple' },
-          { label: '预设总数', value: `${games.reduce((s, g) => s + (g.preset_count ?? 0), 0)}`, icon: '📋', color: 'blue' },
-          { label: '今日运行', value: '3', icon: '▶', color: 'green' },
-          { label: '活跃游戏', value: `${games.length}`, icon: '🕹', color: 'orange' },
-        ].map((stat) => (
-          <div className="stat-card" key={stat.label}>
-            <div className={`stat-card-icon ${stat.color}`}>{stat.icon}</div>
-            <div className="stat-card-body">
-              <div className="stat-card-label">{stat.label}</div>
-              <div className="stat-card-value">{stat.value}</div>
-            </div>
-          </div>
+        {stats.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
         ))}
       </div>
 
@@ -149,10 +153,9 @@ function GameManager() {
           />
         </div>
         <select
-          className="input"
+          className="input sort-select"
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          style={{ width: '140px' }}
         >
           <option value="name">按名称排序</option>
           <option value="presets">按预设数排序</option>

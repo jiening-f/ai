@@ -1,47 +1,53 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { executionsApi, Execution } from '../api/executions'
+import { gamesApi, Game } from '../api/games'
+import StatCard from '../components/ui/StatCard'
 
-const statusBadge: Record<string, string> = {
-  running: 'badge-running',
-  paused: 'badge-paused',
-  completed: 'badge-completed',
-  error: 'badge-error',
-  stopped: 'badge-stopped',
-}
-
-const statusLabel: Record<string, string> = {
-  running: '运行中',
-  paused: '已暂停',
-  completed: '已完成',
-  error: '出错',
-  stopped: '已停止',
+const STATUS: Record<string, { badge: string; label: string }> = {
+  running:   { badge: 'badge-running',   label: '运行中' },
+  paused:    { badge: 'badge-paused',    label: '已暂停' },
+  completed: { badge: 'badge-completed', label: '已完成' },
+  error:     { badge: 'badge-error',     label: '出错' },
+  stopped:   { badge: 'badge-stopped',   label: '已停止' },
 }
 
 function Dashboard() {
   const navigate = useNavigate()
   const [recentExecutions, setRecentExecutions] = useState<Execution[]>([])
+  const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // 统计指标
-  const stats = [
-    { label: '已添加游戏', value: '5', icon: '🎮', color: 'purple' },
-    { label: '预设总数', value: '12', icon: '📋', color: 'blue' },
-    { label: '今日运行', value: '3', icon: '▶', color: 'green' },
-    { label: '活跃插件', value: '7', icon: '🧩', color: 'orange' },
-  ]
-
   useEffect(() => {
-    executionsApi
-      .list({ limit: 10 })
-      .then(setRecentExecutions)
-      .catch((err) => {
-        setError(err.message)
-        setRecentExecutions([])
+    Promise.all([
+      gamesApi.list().catch(() => [] as Game[]),
+      executionsApi.list({ limit: 10 }).catch(() => [] as Execution[]),
+    ])
+      .then(([g, e]) => {
+        setGames(g)
+        setRecentExecutions(e)
       })
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
+
+  // 从真实数据推导统计指标
+  const stats = useMemo(() => {
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayCount = recentExecutions.filter(
+      (e) => e.started_at && new Date(e.started_at) >= todayStart,
+    ).length
+    const totalPresets = games.reduce((s, g) => s + (g.preset_count ?? 0), 0)
+
+    return [
+      { label: '已添加游戏', value: games.length,      icon: '🎮', color: 'purple' as const },
+      { label: '预设总数',   value: totalPresets,       icon: '📋', color: 'blue'   as const },
+      { label: '今日运行',   value: todayCount,         icon: '▶',  color: 'green'  as const },
+      { label: '活跃插件',   value: '-',                icon: '🧩', color: 'orange' as const },
+    ]
+  }, [games, recentExecutions])
 
   const formatDuration = (ms: number | null) => {
     if (!ms) return '-'
@@ -61,13 +67,7 @@ function Dashboard() {
       {/* 统计卡片 */}
       <div className="stat-card-grid">
         {stats.map((stat) => (
-          <div className="stat-card" key={stat.label}>
-            <div className={`stat-card-icon ${stat.color}`}>{stat.icon}</div>
-            <div className="stat-card-body">
-              <div className="stat-card-label">{stat.label}</div>
-              <div className="stat-card-value">{stat.value}</div>
-            </div>
-          </div>
+          <StatCard key={stat.label} {...stat} />
         ))}
       </div>
 
@@ -125,18 +125,19 @@ function Dashboard() {
                     </td>
                   </tr>
                 ) : (
-                  recentExecutions.map((exec) => (
-                    <tr key={exec.id}>
-                      <td>{exec.preset_name || `预设 #${exec.preset_id}`}</td>
-                      <td>
-                        <span className={`badge ${statusBadge[exec.status] || 'badge-neutral'}`}>
-                          {statusLabel[exec.status] || exec.status}
-                        </span>
-                      </td>
-                      <td>{formatDuration(exec.duration_ms)}</td>
-                      <td className="text-tertiary text-small">{formatTime(exec.started_at)}</td>
-                    </tr>
-                  ))
+                  recentExecutions.map((exec) => {
+                    const s = STATUS[exec.status] || { badge: 'badge-neutral', label: exec.status }
+                    return (
+                      <tr key={exec.id}>
+                        <td>{exec.preset_name || `预设 #${exec.preset_id}`}</td>
+                        <td>
+                          <span className={`badge ${s.badge}`}>{s.label}</span>
+                        </td>
+                        <td>{formatDuration(exec.duration_ms)}</td>
+                        <td className="text-tertiary text-small">{formatTime(exec.started_at)}</td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>

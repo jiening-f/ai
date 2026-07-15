@@ -31,6 +31,7 @@ function Layout({ children }: LayoutProps) {
       {/* 顶部栏 */}
       <header className="topbar">
         <div className="topbar-title">{title}</div>
+{/* TODO: 接入用户系统获取真实头像 */}
         <div className="topbar-user" title="用户">U</div>
       </header>
 
