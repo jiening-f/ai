@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>游戏全能脚本 — 图标 v3（带茎叶花朵）</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #333; padding: 40px; }
+  .container { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
+  .subtitle { font-size: 15px; color: #888; margin-bottom: 40px; }
+  .section-title { font-size: 18px; font-weight: 600; color: #333; margin: 32px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #ddd; }
+  .card { background: #fff; border-radius: 16px; padding: 32px; margin-bottom: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .hero { display: flex; align-items: center; gap: 48px; }
+  .hero-icon { width: 200px; height: 200px; flex-shrink: 0; }
+  .hero-info h2 { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+  .hero-info .tagline { font-size: 14px; color: #558b2f; margin-bottom: 14px; font-weight: 500; }
+  .hero-info p { font-size: 14px; color: #666; line-height: 1.7; max-width: 420px; }
+  .size-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+  .size-card { text-align: center; padding: 16px 12px; background: #fafafa; border-radius: 12px; border: 1px solid #eee; width: 130px; }
+  .size-icon { display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+  .size-label { font-size: 12px; color: #666; font-weight: 500; }
+  .size-dim { font-size: 10px; color: #999; margin-top: 2px; }
+  .mockup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .mockup-box { background: #fafafa; border-radius: 12px; border: 1px solid #eee; padding: 20px; }
+  .mockup-box h3 { font-size: 13px; color: #555; margin-bottom: 14px; font-weight: 600; }
+  .desktop-scene { background: #f0f0f0; border-radius: 10px; padding: 24px; display: flex; align-items: center; justify-content: center; gap: 24px; }
+  .icon-item { text-align: center; }
+  .icon-item .label { font-size: 11px; color: #555; margin-top: 6px; }
+  .taskbar-scene { background: #e8e8e8; border-radius: 8px; padding: 8px 14px; display: flex; align-items: center; gap: 6px; height: 46px; }
+  .taskbar-item { width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #d0d0d0; }
+  .taskbar-item.active { background: #fff5cc; }
+  .taskbar-time { margin-left: auto; font-size: 12px; color: #888; }
+  .titlebar-scene { background: #e8e8e8; border-radius: 8px 8px 0 0; padding: 6px 12px; display: flex; align-items: center; gap: 8px; height: 34px; }
+  .titlebar-dots { display: flex; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green { background: #28c840; }
+  .titlebar-title { font-size: 12px; color: #666; display: flex; align-items: center; gap: 6px; }
+  .window-body { height: 70px; background: #fafafa; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 12px; border-radius: 0 0 8px 8px; border: 1px solid #e8e8e8; border-top: none; }
+  .start-scene { background: #f5f5f5; border-radius: 10px; padding: 14px; }
+  .start-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: #fff8e6; border-radius: 8px; }
+  .start-item .name { font-size: 13px; color: #333; font-weight: 600; }
+  .start-item .subname { font-size: 10px; color: #999; }
+  .palette { display: flex; gap: 20px; flex-wrap: wrap; }
+  .color-chip { text-align: center; }
+  .color-swatch { width: 44px; height: 44px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #ddd; }
+  .color-name { font-size: 10px; color: #666; }
+  .color-hex { font-size: 9px; color: #999; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 6px; }
+  .tag.fix { background: #e8f5e9; color: #2e7d32; }
+  .tag.new { background: #e3f2fd; color: #1565c0; }
+  @media (max-width:700px) { .hero { flex-direction: column; text-align: center; } .mockup-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>游戏全能脚本</h1>
+  <div class="subtitle">桌面应用图标设计 v3 — 带茎叶的完整花朵</div>
+
+  <div class="card" style="background:#fff8e6; border:1px solid #ffe066;">
+    <strong style="color:#e65100;">v2 → v3 改进：</strong>
+    <span class="tag new">新增</span> 花茎 + 叶子
+    <span class="tag fix">修复</span> 白色桌面可见性 — 花瓣加深至 <code>#ffd84d</code> + 棕色描边 <code>#8b7355</code> + 外框 <code>#bbb</code>
+    <span class="tag fix">修复</span> 文件已通过 git commit 提交到仓库
+  </div>
+
+  <!-- Hero -->
+  <div class="card">
+    <div class="hero">
+      <div class="hero-icon">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+          <use href="#flowerV3"/>
+        </svg>
+      </div>
+      <div class="hero-info">
+        <h2>游戏全能脚本</h2>
+        <div class="tagline">Game All-in-One Script</div>
+        <p>完整花朵 + 花茎 + 叶子。花瓣使用 <code>#ffd84d</code> 搭配 <code>#8b7355</code> 深描边，白色桌面上清晰可辨。花茎为绿色渐变，两侧各有一片叶子。图标外框 <code>#bbb</code> 确保在浅色背景上不"消失"。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Size Grid -->
+  <div class="section-title">尺寸预览</div>
+  <div class="card">
+    <div class="size-grid">
+      <div class="size-card"><div class="size-icon"><svg viewBox="0 0 512 512" width="96" height="96"><use href="#flowerV3"/></svg></div><div class="size-label">桌面快捷方式</div><div class="size-dim">128 × 128</div></div>
+      <div class="size-card"><div class="size-icon"><svg viewBox="0 0 512 512" width="56" height="56"><use href="#flowerV3"/></svg></div><div class="size-label">开始菜单</div><div class="size-dim">64 × 64</div></div>
+      <div class="size-card"><div class="size-icon"><svg viewBox="0 0 512 512" width="40" height="40"><use href="#flowerV3"/></svg></div><div class="size-label">任务栏</div><div class="size-dim">48 × 48</div></div>
+      <div class="size-card"><div class="size-icon"><svg viewBox="0 0 512 512" width="28" height="28"><use href="#flowerV3"/></svg></div><div class="size-label">标题栏</div><div class="size-dim">32 × 32</div></div>
+      <div class="size-card"><div class="size-icon"><svg viewBox="0 0 512 512" width="16" height="16"><use href="#flowerV3"/></svg></div><div class="size-label">系统托盘</div><div class="size-dim">16 × 16</div></div>
+    </div>
+  </div>
+
+  <!-- Use Cases -->
+  <div class="section-title">使用场景</div>
+  <div class="card">
+    <div class="mockup-grid">
+      <div class="mockup-box">
+        <h3>桌面快捷方式</h3>
+        <div class="desktop-scene">
+          <div class="icon-item"><svg viewBox="0 0 512 512" width="56" height="56"><use href="#flowerV3"/></svg><div class="label">游戏全能脚本</div></div>
+          <div class="icon-item"><svg viewBox="0 0 512 512" width="48" height="48"><use href="#folderIcon"/></svg><div class="label">游戏工具</div></div>
+          <div class="icon-item"><svg viewBox="0 0 512 512" width="48" height="48"><use href="#folderIcon"/></svg><div class="label">配置文件</div></div>
+        </div>
+      </div>
+      <div class="mockup-box">
+        <h3>任务栏</h3>
+        <div class="taskbar-scene">
+          <div class="taskbar-item">☐</div>
+          <div class="taskbar-item active"><svg viewBox="0 0 512 512" width="20" height="20"><use href="#flowerV3"/></svg></div>
+          <div class="taskbar-item">📁</div>
+          <div class="taskbar-item">📁</div>
+          <div class="taskbar-time">14:30</div>
+        </div>
+      </div>
+      <div class="mockup-box">
+        <h3>窗口标题栏</h3>
+        <div>
+          <div class="titlebar-scene"><div class="titlebar-dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div><div class="titlebar-title"><svg viewBox="0 0 512 512" width="14" height="14"><use href="#flowerV3"/></svg> 游戏全能脚本</div></div>
+          <div class="window-body">窗口内容区域</div>
+        </div>
+      </div>
+      <div class="mockup-box">
+        <h3>开始菜单</h3>
+        <div class="start-scene">
+          <div class="start-item"><svg viewBox="0 0 512 512" width="36" height="36"><use href="#flowerV3"/></svg><div><div class="name">游戏全能脚本</div><div class="subname">Game All-in-One Script</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Color Palette -->
+  <div class="section-title">色彩体系</div>
+  <div class="card">
+    <div class="palette">
+      <div class="color-chip"><div class="color-swatch" style="background:#bbb;"></div><div class="color-name">外框</div><div class="color-hex">#bbbbbb</div></div>
+      <div class="color-chip"><div class="color-swatch" style="background:#ffd84d;"></div><div class="color-name">花瓣</div><div class="color-hex">#ffd84d</div></div>
+      <div class="color-chip"><div class="color-swatch" style="background:#8b7355;"></div><div class="color-name">花描边</div><div class="color-hex">#8b7355</div></div>
+      <div class="color-chip"><div class="color-swatch" style="background:#ff8f00;"></div><div class="color-name">花蕊</div><div class="color-hex">#ff8f00</div></div>
+      <div class="color-chip"><div class="color-swatch" style="background:#7cb342;"></div><div class="color-name">茎叶</div><div class="color-hex">#7cb342</div></div>
+      <div class="color-chip"><div class="color-swatch" style="background:#558b2f;"></div><div class="color-name">叶脉</div><div class="color-hex">#558b2f</div></div>
+    </div>
+  </div>
+
+  <!-- Design Notes -->
+  <div class="section-title">设计说明</div>
+  <div class="card" style="display:flex;gap:24px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;">
+      <h4 style="font-size:14px;font-weight:600;color:#558b2f;margin-bottom:10px;">设计要点</h4>
+      <ul style="list-style:none;font-size:13px;color:#666;line-height:2;">
+        <li>🌸 完整五瓣花朵 + 花茎</li>
+        <li>🌿 左右两片绿叶</li>
+        <li>🟡 深黄色花瓣 + 棕色描边</li>
+        <li>⬜ 白色背景 + #bbb 外框</li>
+        <li>📐 所有尺寸保持可辨</li>
+      </ul>
+    </div>
+    <div style="flex:1;min-width:200px;">
+      <h4 style="font-size:14px;font-weight:600;color:#558b2f;margin-bottom:10px;">前端实现</h4>
+      <ul style="list-style:none;font-size:13px;color:#666;line-height:2;">
+        <li>1. SVG 源 → icon-gen/icon-v3.svg</li>
+        <li>2. 512×512 → icons/icon.png✅</li>
+        <li>3. <code>npx tauri icon icon.png</code></li>
+        <li>4. 自动生成 .ico / .icns</li>
+        <li>5. 已提交到 git 仓库</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+  <defs>
+    <g id="petalV3">
+      <ellipse cx="0" cy="-105" rx="50" ry="72" fill="#ffd84d"/>
+      <ellipse cx="0" cy="-105" rx="50" ry="72" fill="none" stroke="#8b7355" stroke-width="3"/>
+    </g>
+    <g id="leafV3">
+      <path d="M0 0 C-20 -40 -10 -70 0 -90 C10 -70 20 -40 0 0Z" fill="#7cb342"/>
+      <path d="M0 0 C-20 -40 -10 -70 0 -90 C10 -70 20 -40 0 0Z" fill="none" stroke="#558b2f" stroke-width="2.5"/>
+      <line x1="0" y1="0" x2="0" y2="-75" stroke="#558b2f" stroke-width="1.5" opacity="0.5"/>
+      <line x1="0" y1="-50" x2="-12" y2="-60" stroke="#558b2f" stroke-width="1" opacity="0.4"/>
+      <line x1="0" y1="-50" x2="12" y2="-60" stroke="#558b2f" stroke-width="1" opacity="0.4"/>
+    </g>
+  </defs>
+  <g id="flowerV3">
+    <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="#ffffff"/>
+    <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#bbbbbb" stroke-width="3"/>
+    <g transform="translate(256,185)">
+      <use href="#petalV3" transform="rotate(0)"/>
+      <use href="#petalV3" transform="rotate(72)"/>
+      <use href="#petalV3" transform="rotate(144)"/>
+      <use href="#petalV3" transform="rotate(216)"/>
+      <use href="#petalV3" transform="rotate(288)"/>
+      <circle cx="0" cy="0" r="40" fill="#ffb300"/>
+      <circle cx="0" cy="0" r="40" fill="none" stroke="#8b7355" stroke-width="2.5"/>
+      <circle cx="0" cy="0" r="26" fill="#ff8f00"/>
+      <circle cx="0" cy="0" r="14" fill="#e65100"/>
+      <circle cx="-8" cy="-8" r="3.5" fill="#cc7700" opacity="0.5"/>
+      <circle cx="10" cy="-4" r="2.5" fill="#cc7700" opacity="0.4"/>
+      <circle cx="4" cy="12" r="3" fill="#cc7700" opacity="0.45"/>
+      <circle cx="-12" cy="6" r="2.5" fill="#cc7700" opacity="0.4"/>
+      <circle cx="14" cy="8" r="2" fill="#cc7700" opacity="0.35"/>
+    </g>
+    <path d="M256 220 L256 440" stroke="#558b2f" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <path d="M256 220 L256 440" stroke="#7cb342" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <g transform="translate(228,330) rotate(-50) scale(0.85)"><use href="#leafV3"/></g>
+    <g transform="translate(288,380) rotate(50) scale(-0.7,0.7)"><use href="#leafV3"/></g>
+  </g>
+  <g id="folderIcon">
+    <rect x="64" y="128" width="384" height="320" rx="48" fill="#f0e6cc"/>
+    <rect x="64" y="128" width="384" height="256" rx="48" fill="#f5edd6"/>
+    <rect x="128" y="176" width="320" height="48" rx="8" fill="#e8dcc0" opacity="0.5"/>
+  </g>
+</svg>
+</body>
+</html>

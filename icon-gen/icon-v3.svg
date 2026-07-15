@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- 花瓣组件 -->
+    <g id="petal">
+      <ellipse cx="0" cy="-105" rx="50" ry="72" fill="#ffd84d"/>
+      <ellipse cx="0" cy="-105" rx="50" ry="72" fill="none" stroke="#8b7355" stroke-width="3"/>
+    </g>
+    <!-- 叶子组件 -->
+    <g id="leaf">
+      <path d="M0 0 C-20 -40 -10 -70 0 -90 C10 -70 20 -40 0 0Z" fill="#7cb342"/>
+      <path d="M0 0 C-20 -40 -10 -70 0 -90 C10 -70 20 -40 0 0Z" fill="none" stroke="#558b2f" stroke-width="2.5"/>
+      <!-- 叶脉 -->
+      <line x1="0" y1="0" x2="0" y2="-75" stroke="#558b2f" stroke-width="1.5" opacity="0.5"/>
+      <line x1="0" y1="-50" x2="-12" y2="-60" stroke="#558b2f" stroke-width="1" opacity="0.4"/>
+      <line x1="0" y1="-50" x2="12" y2="-60" stroke="#558b2f" stroke-width="1" opacity="0.4"/>
+    </g>
+  </defs>
+
+  <!-- 白色背景圆角方形 + 可见描边（解决白色桌面可见性） -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="#ffffff"/>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#bbbbbb" stroke-width="3"/>
+
+  <!-- ===== 花朵 ===== -->
+  <g transform="translate(256, 185)">
+    <!-- 5 瓣花 -->
+    <use href="#petal" transform="rotate(0)"/>
+    <use href="#petal" transform="rotate(72)"/>
+    <use href="#petal" transform="rotate(144)"/>
+    <use href="#petal" transform="rotate(216)"/>
+    <use href="#petal" transform="rotate(288)"/>
+
+    <!-- 花蕊 -->
+    <circle cx="0" cy="0" r="40" fill="#ffb300"/>
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#8b7355" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="26" fill="#ff8f00"/>
+    <circle cx="0" cy="0" r="14" fill="#e65100"/>
+
+    <!-- 花蕊纹理点 -->
+    <circle cx="-8" cy="-8" r="3.5" fill="#cc7700" opacity="0.5"/>
+    <circle cx="10" cy="-4" r="2.5" fill="#cc7700" opacity="0.4"/>
+    <circle cx="4" cy="12" r="3" fill="#cc7700" opacity="0.45"/>
+    <circle cx="-12" cy="6" r="2.5" fill="#cc7700" opacity="0.4"/>
+    <circle cx="14" cy="8" r="2" fill="#cc7700" opacity="0.35"/>
+  </g>
+
+  <!-- ===== 花茎 ===== -->
+  <!-- 主茎 -->
+  <path d="M256 220 L256 440" stroke="#558b2f" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M256 220 L256 440" stroke="#7cb342" stroke-width="7" fill="none" stroke-linecap="round"/>
+
+  <!-- ===== 叶子 - 左侧 ===== -->
+  <g transform="translate(228, 330) rotate(-50) scale(0.85)">
+    <use href="#leaf"/>
+  </g>
+
+  <!-- ===== 叶子 - 右侧 ===== -->
+  <g transform="translate(288, 380) rotate(50) scale(-0.7, 0.7)">
+    <use href="#leaf"/>
+  </g>
+</svg>
