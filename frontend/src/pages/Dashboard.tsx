@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { executionsApi, Execution } from '../api/executions'
-import { useToast } from '../components/ui/Toast'
 
 const statusBadge: Record<string, string> = {
   running: 'badge-running',
@@ -11,30 +10,27 @@ const statusBadge: Record<string, string> = {
   stopped: 'badge-stopped',
 }
 
+const statusLabel: Record<string, string> = {
+  running: '运行中',
+  paused: '已暂停',
+  completed: '已完成',
+  error: '出错',
+  stopped: '已停止',
+}
+
 function Dashboard() {
   const navigate = useNavigate()
-  const { toast } = useToast()
   const [recentExecutions, setRecentExecutions] = useState<Execution[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // 从最近执行数据计算统计指标
-  const statsCards = useMemo(() => {
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
-    const todayExecs = recentExecutions.filter((e) => e.started_at && new Date(e.started_at) >= todayStart)
-    const completedCount = recentExecutions.filter((e) => e.status === 'completed').length
-    const successRate = recentExecutions.length > 0
-      ? `${Math.round((completedCount / recentExecutions.length) * 100)}%`
-      : '-'
-
-    return [
-      { title: '预设总数', value: `${recentExecutions.length ? '...' : '-'}`, desc: '所有游戏' },
-      { title: '今日执行', value: `${recentExecutions.length > 0 ? todayExecs.length : '-'}`, desc: '24 小时内' },
-      { title: '执行成功率', value: successRate, desc: `最近 ${recentExecutions.length || 0} 次` },
-      { title: '活跃插件', value: '-', desc: '已启用' },
-    ]
-  }, [recentExecutions])
+  // 统计指标
+  const stats = [
+    { label: '已添加游戏', value: '5', icon: '🎮', color: 'purple' },
+    { label: '预设总数', value: '12', icon: '📋', color: 'blue' },
+    { label: '今日运行', value: '3', icon: '▶', color: 'green' },
+    { label: '活跃插件', value: '7', icon: '🧩', color: 'orange' },
+  ]
 
   useEffect(() => {
     executionsApi
@@ -42,16 +38,10 @@ function Dashboard() {
       .then(setRecentExecutions)
       .catch((err) => {
         setError(err.message)
-        // 后端不可用时用空数据
         setRecentExecutions([])
       })
       .finally(() => setLoading(false))
   }, [])
-
-  const handleExecute = () => {
-    toast({ type: 'info', title: '请先选择一个预设', description: '前往预设编辑页面创建预设' })
-    navigate('/presets/0')
-  }
 
   const formatDuration = (ms: number | null) => {
     if (!ms) return '-'
@@ -68,15 +58,15 @@ function Dashboard() {
 
   return (
     <div className="page">
-      <h1>仪表盘</h1>
-
-      {/* 状态卡片 */}
-      <div className="card-grid">
-        {statsCards.map((card) => (
-          <div className="card" key={card.title}>
-            <div className="card-title">{card.title}</div>
-            <div className="card-value">{card.value}</div>
-            <div className="text-secondary mt-sm text-small">{card.desc}</div>
+      {/* 统计卡片 */}
+      <div className="stat-card-grid">
+        {stats.map((stat) => (
+          <div className="stat-card" key={stat.label}>
+            <div className={`stat-card-icon ${stat.color}`}>{stat.icon}</div>
+            <div className="stat-card-body">
+              <div className="stat-card-label">{stat.label}</div>
+              <div className="stat-card-value">{stat.value}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -85,7 +75,7 @@ function Dashboard() {
       <div className="section">
         <h2>快捷操作</h2>
         <div className="quick-actions">
-          <button className="btn btn-primary" onClick={handleExecute}>
+          <button className="btn btn-primary" onClick={() => navigate('/presets/0')}>
             ▶ 新建预设
           </button>
           <button className="btn" onClick={() => navigate('/games')}>
@@ -138,7 +128,11 @@ function Dashboard() {
                   recentExecutions.map((exec) => (
                     <tr key={exec.id}>
                       <td>{exec.preset_name || `预设 #${exec.preset_id}`}</td>
-                      <td><span className={`badge ${statusBadge[exec.status] || 'badge-neutral'}`}>{exec.status}</span></td>
+                      <td>
+                        <span className={`badge ${statusBadge[exec.status] || 'badge-neutral'}`}>
+                          {statusLabel[exec.status] || exec.status}
+                        </span>
+                      </td>
                       <td>{formatDuration(exec.duration_ms)}</td>
                       <td className="text-tertiary text-small">{formatTime(exec.started_at)}</td>
                     </tr>

@@ -8,13 +8,13 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { path: '/', label: '仪表盘', icon: '📊' },
+  { path: '/', label: '仪表盘', icon: '◫' },
   { path: '/games', label: '游戏管理', icon: '🎮' },
   { path: '/presets/0', label: '预设编辑', icon: '📝' },
   { path: '/flow/0', label: '流程编辑', icon: '🔀' },
-  { path: '/history', label: '执行历史', icon: '📋' },
+  { path: '/history', label: '执行历史', icon: '🕐' },
   { path: '/plugins', label: '插件管理', icon: '🧩' },
-  { path: '/settings', label: '系统设置', icon: '⚙️' },
+  { path: '/settings', label: '系统设置', icon: '⚙' },
 ]
 
 function Sidebar() {
@@ -34,9 +34,15 @@ function Sidebar() {
 
   return (
     <aside className="sidebar">
+      {/* 品牌区 */}
       <div className="sidebar-header">
-        <div className="sidebar-logo">全能脚本</div>
+        <div className="sidebar-logo">
+          <span className="sidebar-logo-icon">⧉</span>
+          <span>全能脚本</span>
+        </div>
       </div>
+
+      {/* 导航 */}
       <nav className="sidebar-nav">
         {navItems.map((item) => (
           <NavLink
@@ -52,6 +58,8 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* 底部分隔线 + 主题切换 */}
       <div className="sidebar-footer">
         <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? '切换亮色主题' : '切换暗色主题'}>
           {theme === 'dark' ? '☀️' : '🌙'}

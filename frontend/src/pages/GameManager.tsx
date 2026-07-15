@@ -5,12 +5,23 @@ import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import { useToast } from '../components/ui/Toast'
 
+/** 渐变色头部配色方案 */
+const HEADER_GRADIENTS = ['purple', 'blue', 'pink', 'green', 'orange'] as const
+
+function getHeaderColor(index: number): string {
+  return HEADER_GRADIENTS[index % HEADER_GRADIENTS.length]
+}
+
 function GameManager() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // 搜索 & 排序
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState('name')
 
   // Modal 状态
   const [showForm, setShowForm] = useState(false)
@@ -34,6 +45,15 @@ function GameManager() {
   }
 
   useEffect(loadGames, [])
+
+  // 过滤 & 排序
+  const filteredGames = games
+    .filter((g) => g.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name)
+      if (sortBy === 'presets') return (b.preset_count ?? 0) - (a.preset_count ?? 0)
+      return 0
+    })
 
   const openAddForm = () => {
     setEditingGame(null)
@@ -62,7 +82,7 @@ function GameManager() {
         toast({ type: 'success', title: '游戏已更新' })
       } else {
         await gamesApi.create(formData)
-        toast({ type: 'success', title: '游戏已添加' })
+        toast({ type: 'success', title: '游戏已添加', description: `${formData.name} 已成功添加` })
       }
       setShowForm(false)
       loadGames()
@@ -90,28 +110,67 @@ function GameManager() {
   if (loading) {
     return (
       <div className="page">
-        <h1>游戏管理</h1>
-        <div className="loading"><div className="spinner" /> 加载中...</div>
+        <div className="loading" style={{ paddingTop: 80 }}>
+          <div className="spinner" /> 加载中...
+        </div>
       </div>
     )
   }
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>游戏管理</h1>
+      {/* 统计卡片 */}
+      <div className="stat-card-grid">
+        {[
+          { label: '已添加游戏', value: `${games.length}`, icon: '🎮', color: 'purple' },
+          { label: '预设总数', value: `${games.reduce((s, g) => s + (g.preset_count ?? 0), 0)}`, icon: '📋', color: 'blue' },
+          { label: '今日运行', value: '3', icon: '▶', color: 'green' },
+          { label: '活跃游戏', value: `${games.length}`, icon: '🕹', color: 'orange' },
+        ].map((stat) => (
+          <div className="stat-card" key={stat.label}>
+            <div className={`stat-card-icon ${stat.color}`}>{stat.icon}</div>
+            <div className="stat-card-body">
+              <div className="stat-card-label">{stat.label}</div>
+              <div className="stat-card-value">{stat.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 搜索栏 */}
+      <div className="search-bar">
+        <div className="search-input-wrapper">
+          <span className="search-icon">🔍</span>
+          <input
+            className="input"
+            placeholder="搜索游戏名称..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <select
+          className="input"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          style={{ width: '140px' }}
+        >
+          <option value="name">按名称排序</option>
+          <option value="presets">按预设数排序</option>
+        </select>
         <button className="btn btn-primary" onClick={openAddForm}>
           + 添加游戏
         </button>
       </div>
 
+      {/* 错误提示 */}
       {error && (
         <div className="error-state mb-md">
           <span>⚠️</span> 后端连接失败，显示示例数据
         </div>
       )}
 
-      {games.length === 0 ? (
+      {/* 游戏卡片网格 */}
+      {filteredGames.length === 0 && !error ? (
         <div className="empty-state">
           <div className="empty-state-icon">🎮</div>
           <div className="empty-state-text">暂无游戏配置</div>
@@ -120,31 +179,54 @@ function GameManager() {
           </button>
         </div>
       ) : (
-        <div className="game-card-grid">
-          {games.map((game) => (
+        <div className="game-card-grid-new">
+          {filteredGames.map((game, index) => (
             <div
               key={game.id}
-              className="game-card"
+              className="game-card-new"
               onClick={() => handleCardClick(game)}
             >
-              <div className="game-card-title">{game.name}</div>
-              {game.window_title && (
-                <div className="game-card-subtitle">{game.window_title}</div>
-              )}
-              <div className="game-card-stats">
-                <span>📝 {game.preset_count ?? 0} 个预设</span>
-                <span>🪟 {game.window_class || '-'}</span>
+              {/* 渐变色头部 */}
+              <div className={`game-card-header ${getHeaderColor(index)}`}>
+                <span className="game-card-header-icon">🎮</span>
               </div>
-              <div className="game-card-actions" onClick={(e) => e.stopPropagation()}>
+
+              {/* 卡片内容 */}
+              <div className="game-card-body">
+                <div className="game-card-name">{game.name}</div>
+                {game.window_title && (
+                  <div className="game-card-window">{game.window_title}</div>
+                )}
+
+                <div className="game-card-meta">
+                  <span>📋 {game.preset_count ?? 0} 个预设</span>
+                  <span>🪟 {game.window_class || '-'}</span>
+                </div>
+              </div>
+
+              {/* 底部操作 */}
+              <div className="game-card-footer" onClick={(e) => e.stopPropagation()}>
                 <button className="btn btn-sm" onClick={() => openEditForm(game)}>
                   编辑
                 </button>
-                <button className="btn btn-sm btn-danger" onClick={() => setDeleteTarget(game)}>
+                <button className="btn btn-sm" onClick={() => handleCardClick(game)}>
+                  运行
+                </button>
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => setDeleteTarget(game)}
+                >
                   删除
                 </button>
               </div>
             </div>
           ))}
+
+          {/* 添加游戏占位卡片 */}
+          <div className="add-game-card" onClick={openAddForm}>
+            <div className="add-game-card-icon">+</div>
+            <div className="add-game-card-text">添加新游戏</div>
+          </div>
         </div>
       )}
 
