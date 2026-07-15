@@ -2,13 +2,9 @@
   <defs>
     <!-- 背景渐变 — 油画风深色画布 -->
     <radialGradient id="bgGrad" cx="44%" cy="38%" r="78%">
-      <stop offset="0%" stop-color="#3d2816"/>
-      <stop offset="35%" stop-color="#20140e"/>
-      <stop offset="100%" stop-color="#080605"/>
-    </radialGradient>
-    <radialGradient id="vignette" cx="50%" cy="50%" r="50%">
-      <stop offset="45%" stop-color="#000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000" stop-opacity="0.55"/>
+      <stop offset="0%" stop-color="#f5ead6"/>
+      <stop offset="40%" stop-color="#e8d4b0"/>
+      <stop offset="100%" stop-color="#d4bea0"/>
     </radialGradient>
 
     <!-- 背景层花瓣渐变（暗金色，在花头后方） -->
@@ -46,16 +42,6 @@
       <stop offset="100%" stop-color="#c48a18"/>
     </linearGradient>
 
-    <!-- 花蕊渐变 -->
-    <radialGradient id="stamenBase" cx="40%" cy="40%" r="65%">
-      <stop offset="0%" stop-color="#ff8833"/>
-      <stop offset="45%" stop-color="#dd5500"/>
-      <stop offset="100%" stop-color="#882200"/>
-    </radialGradient>
-    <radialGradient id="stamenGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffaa44" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#ffaa44" stop-opacity="0"/>
-    </radialGradient>
 
     <!-- 花萼渐变 -->
     <linearGradient id="sepalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -106,10 +92,7 @@
 
   <!-- ===== 背景 ===== -->
   <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bgGrad)"/>
-  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#vignette)"/>
 
-  <!-- 油画背景纹理（轻微噪点感） -->
-  <rect x="26" y="26" width="460" height="460" rx="86" ry="86" fill="none" stroke="#4a3520" stroke-width="0.5" opacity="0.3"/>
 
   <!-- ===== 花茎 ===== -->
   <g filter="url(#shadow)">
@@ -187,27 +170,10 @@
     <path d="M198 218 C195 228 198 238 207 242 C215 238 215 228 215 218Z" fill="#5a7a36" opacity="0.5"/>
   </g>
 
-  <!-- ===== 花蕊（带有发光效果） ===== -->
-  <circle cx="234" cy="206" r="32" fill="url(#stamenGlow)" filter="url(#softGlow)"/>
-  <ellipse cx="236" cy="208" rx="18" ry="16" fill="url(#stamenBase)" filter="url(#shadow)"/>
-  <ellipse cx="234" cy="205" rx="12" ry="10" fill="#ff8833" opacity="0.6"/>
-  <ellipse cx="232" cy="202" rx="6" ry="5" fill="#ffbb66" opacity="0.7"/>
-
-  <!-- 花粉点 -->
-  <circle cx="244" cy="202" r="3" fill="#ffcc44" opacity="0.8" filter="url(#softGlow)"/>
-  <circle cx="248" cy="210" r="2.5" fill="#ffcc44" opacity="0.7"/>
-  <circle cx="240" cy="218" r="3" fill="#ffcc44" opacity="0.75"/>
-  <circle cx="230" cy="216" r="2.5" fill="#ffcc44" opacity="0.65"/>
-  <circle cx="226" cy="202" r="2.5" fill="#ffcc44" opacity="0.7"/>
-  <circle cx="242" cy="207" r="2" fill="#ffdd66" opacity="0.6"/>
-  <circle cx="234" cy="220" r="2" fill="#ffdd66" opacity="0.6"/>
-  <circle cx="250" cy="206" r="2" fill="#ffdd66" opacity="0.55"/>
-
-  <!-- ===== 氛围光晕（花周围的暖色辉光） ===== -->
-  <circle cx="250" cy="195" r="140" fill="#ffaa44" opacity="0.04" filter="url(#softGlow)"/>
-  <circle cx="280" cy="185" r="80" fill="#ffcc66" opacity="0.03" filter="url(#softGlow)"/>
+  <!-- ===== 花心深处（自然暗部阴影） ===== -->
+  <ellipse cx="212" cy="204" rx="7" ry="9" fill="#5a4020" opacity="0.35"/>
 
   <!-- ===== 外框 ===== -->
-  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#5a4530" stroke-width="2.5"/>
-  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#8a7050" stroke-width="0.8" opacity="0.5"/>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#b8a080" stroke-width="2.5"/>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#d4c0a0" stroke-width="0.8" opacity="0.6"/>
 </svg>

@@ -3,56 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>游戏全能脚本 — 图标 v4（油画风格）</title>
+<title>游戏全能脚本 — 图标 v4（亮背景无花蕊）</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background: #1a1410; color: #d0c0a0; padding: 40px; }
+  body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background: #f0e8d8; color: #8a7a60; padding: 40px; }
   .container { max-width: 960px; margin: 0 auto; }
-  h1 { font-size: 28px; font-weight: 800; color: #f0d080; margin-bottom: 8px; }
-  .subtitle { font-size: 15px; color: #807060; margin-bottom: 40px; }
-  .section-title { font-size: 18px; font-weight: 600; color: #d0b080; margin: 32px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #4a3520; }
-  .card { background: #201814; border-radius: 16px; padding: 32px; margin-bottom: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid #3a2a1a; }
+  h1 { font-size: 28px; font-weight: 800; color: #6a5a45; margin-bottom: 8px; }
+  .subtitle { font-size: 15px; color: #b8a890; margin-bottom: 40px; }
+  .section-title { font-size: 18px; font-weight: 600; color: #8a7a60; margin: 32px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #d4c8b0; }
+  .card { background: #faf6ee; border-radius: 16px; padding: 32px; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e0d4c0; }
   .hero { display: flex; align-items: center; gap: 48px; }
-  .hero-icon { width: 200px; height: 200px; flex-shrink: 0; border-radius: 37px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-  .hero-info h2 { font-size: 22px; font-weight: 700; color: #f0d080; margin-bottom: 6px; }
-  .hero-info .tagline { font-size: 14px; color: #d4a828; margin-bottom: 14px; font-weight: 500; }
+  .hero-icon { width: 200px; height: 200px; flex-shrink: 0; border-radius: 37px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .hero-info h2 { font-size: 22px; font-weight: 700; color: #6a5a45; margin-bottom: 6px; }
+  .hero-info .tagline { font-size: 14px; color: #c49420; margin-bottom: 14px; font-weight: 500; }
   .hero-info p { font-size: 14px; color: #a09080; line-height: 1.7; max-width: 420px; }
   .size-grid { display: flex; gap: 20px; flex-wrap: wrap; }
-  .size-card { text-align: center; padding: 16px 12px; background: #1a1410; border-radius: 12px; border: 1px solid #3a2a1a; width: 130px; }
+  .size-card { text-align: center; padding: 16px 12px; background: #f0e8d8; border-radius: 12px; border: 1px solid #e0d4c0; width: 130px; }
   .size-icon { display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; border-radius: 12px; overflow: hidden; }
-  .size-icon.rounded { border-radius: 50%; }
-  .size-label { font-size: 12px; color: #c0a070; font-weight: 500; }
-  .size-dim { font-size: 10px; color: #706050; margin-top: 2px; }
+  .size-label { font-size: 12px; color: #8a7a60; font-weight: 500; }
+  .size-dim { font-size: 10px; color: #b8a890; margin-top: 2px; }
   .mockup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .mockup-box { background: #1a1410; border-radius: 12px; border: 1px solid #3a2a1a; padding: 20px; }
-  .mockup-box h3 { font-size: 13px; color: #c0a070; margin-bottom: 14px; font-weight: 600; }
-  .desktop-scene { background: #2a2218; border-radius: 10px; padding: 24px; display: flex; align-items: center; justify-content: center; gap: 24px; }
+  .mockup-box { background: #f0e8d8; border-radius: 12px; border: 1px solid #e0d4c0; padding: 20px; }
+  .mockup-box h3 { font-size: 13px; color: #8a7a60; margin-bottom: 14px; font-weight: 600; }
+  .desktop-scene { background: #e8dcc8; border-radius: 10px; padding: 24px; display: flex; align-items: center; justify-content: center; gap: 24px; }
   .icon-item { text-align: center; }
-  .icon-item .label { font-size: 11px; color: #a09080; margin-top: 6px; }
-  .taskbar-scene { background: #1a1a1a; border-radius: 8px; padding: 8px 14px; display: flex; align-items: center; gap: 6px; height: 46px; }
-  .taskbar-item { width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #2a2a2a; }
-  .taskbar-item.active { background: #1a1410; }
-  .taskbar-time { margin-left: auto; font-size: 12px; color: #605040; }
-  .titlebar-scene { background: #222; border-radius: 8px 8px 0 0; padding: 6px 12px; display: flex; align-items: center; gap: 8px; height: 34px; }
+  .icon-item .label { font-size: 11px; color: #8a7a60; margin-top: 6px; }
+  .taskbar-scene { background: #d8d0c0; border-radius: 8px; padding: 8px 14px; display: flex; align-items: center; gap: 6px; height: 46px; }
+  .taskbar-item { width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #c8bca8; }
+  .taskbar-item.active { background: #faf6ee; }
+  .taskbar-time { margin-left: auto; font-size: 12px; color: #a09080; }
+  .titlebar-scene { background: #d8d0c0; border-radius: 8px 8px 0 0; padding: 6px 12px; display: flex; align-items: center; gap: 8px; height: 34px; }
   .titlebar-dots { display: flex; gap: 6px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; }
-  .dot.red { background: #5f3a3a; }
-  .dot.yellow { background: #5a4a20; }
-  .dot.green { background: #2a4a2a; }
-  .titlebar-title { font-size: 12px; color: #c0a070; display: flex; align-items: center; gap: 6px; }
-  .window-body { height: 70px; background: #1a1410; display: flex; align-items: center; justify-content: center; color: #504030; font-size: 12px; border-radius: 0 0 8px 8px; border: 1px solid #3a2a1a; border-top: none; }
-  .start-scene { background: #1e1a14; border-radius: 10px; padding: 14px; }
-  .start-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: #2a2218; border-radius: 8px; }
-  .start-item .name { font-size: 13px; color: #f0d080; font-weight: 600; }
-  .start-item .subname { font-size: 10px; color: #706050; }
+  .dot.red { background: #cc7a7a; }
+  .dot.yellow { background: #ccb070; }
+  .dot.green { background: #7aaa7a; }
+  .titlebar-title { font-size: 12px; color: #8a7a60; display: flex; align-items: center; gap: 6px; }
+  .window-body { height: 70px; background: #f0e8d8; display: flex; align-items: center; justify-content: center; color: #c8bca8; font-size: 12px; border-radius: 0 0 8px 8px; border: 1px solid #e0d4c0; border-top: none; }
+  .start-scene { background: #e8dcc8; border-radius: 10px; padding: 14px; }
+  .start-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: #faf6ee; border-radius: 8px; }
+  .start-item .name { font-size: 13px; color: #6a5a45; font-weight: 600; }
+  .start-item .subname { font-size: 10px; color: #b8a890; }
   .palette { display: flex; gap: 20px; flex-wrap: wrap; }
   .color-chip { text-align: center; }
-  .color-swatch { width: 44px; height: 44px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #3a2a1a; }
-  .color-name { font-size: 10px; color: #a09080; }
-  .color-hex { font-size: 9px; color: #706050; }
+  .color-swatch { width: 44px; height: 44px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #d4c8b0; }
+  .color-name { font-size: 10px; color: #8a7a60; }
+  .color-hex { font-size: 9px; color: #b8a890; }
   .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 6px; }
-  .tag.new { background: #3a4a28; color: #8aba50; }
-  .tag.change { background: #4a3820; color: #d4a828; }
+  .tag.change { background: #f0e8d0; color: #8a7050; }
+  .tag.fix { background: #dff0d0; color: #5a8a30; }
   @media (max-width:700px) { .hero { flex-direction: column; text-align: center; } .mockup-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -60,16 +59,14 @@
 <div class="container">
 
   <h1>游戏全能脚本</h1>
-  <div class="subtitle">桌面应用图标设计 v4 — 油画风格侧视花朵</div>
+  <div class="subtitle">桌面应用图标设计 v4.1 — 亮色背景 · 无花蕊</div>
 
-  <div class="card" style="background:#2a1a10; border:1px solid #5a3a20;">
-    <strong style="color:#f0d080;">v3 → v4 重大变更：</strong>
-    <span class="tag change">变更</span> 扁平 → <strong>油画风格</strong>
-    <span class="tag change">变更</span> 俯视花瓣 → <strong>侧视花朵自左向右</strong>
-    <span class="tag change">变更</span> 白色背景 → <strong>暗色暖底画布</strong>
-    <span class="tag new">新增</span> 14 层渐变花瓣 + SVG 滤镜柔光
-    <span class="tag new">新增</span> 真实花蕊结构 + 花粉点
-    <br><small style="color:#807060;">完全重绘，保留花朵+茎叶的核心元素，视觉语言全面升级</small>
+  <div class="card" style="background:#f5edd8; border:1px solid #d4be90;">
+    <strong style="color:#8a6a30;">v4 → v4.1 改进：</strong>
+    <span class="tag change">修改</span> 背景从暗色暖底 → <strong>明亮暖色画布</strong> <code>#f5ead6</code>
+    <span class="tag fix">移除</span> <del>花蕊 + 花粉点</del> — 只留花瓣自然暗部
+    <span class="tag change">修改</span> 外框从深色 → 暖金色 <code>#b8a080</code>
+    <br><small style="color:#a09080;">保留油画风格、侧视花朵、花茎绿叶结构不变</small>
   </div>
 
   <!-- Hero -->
@@ -83,7 +80,7 @@
       <div class="hero-info">
         <h2>游戏全能脚本</h2>
         <div class="tagline">Game All-in-One Script</div>
-        <p>油画风格写实花朵，侧视角度面向右侧。深色暖底画布上，14 层渐变金色花瓣层层叠加，营造油画的笔触层次感。花蕊带有柔光发光效果，花茎自然弯曲，配以绿色叶脉。整体传达沉稳、强大的产品气质。</p>
+        <p>明亮暖色背景的油画风格侧视花朵。移除了花蕊结构，金色层叠花瓣在浅暖色画布上更加醒目。保留了花茎绿叶完整搭配，整体更清爽友好。</p>
       </div>
     </div>
   </div>
@@ -125,7 +122,7 @@
       <div class="mockup-box">
         <h3>窗口标题栏</h3>
         <div>
-          <div class="titlebar-scene"><div class="titlebar-dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div><div class="titlebar-title"><svg viewBox="0 0 512 512" width="14" height="14"><use href="#flowerV4"/></svg> 游戏全能脚本</div></div>
+          <div class="titlebar-scene"><div class="titlebar-dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div><div class="titlebar-title"><svg viewBox="0 0 512 512" width="14" height="14"><use href="#flowerV4"/> 游戏全能脚本</div></div>
           <div class="window-body">窗口内容区域</div>
         </div>
       </div>
@@ -142,12 +139,11 @@
   <div class="section-title">色彩体系</div>
   <div class="card">
     <div class="palette">
-      <div class="color-chip"><div class="color-swatch" style="background:#20140e;"></div><div class="color-name">画布背景</div><div class="color-hex">#20140e</div></div>
+      <div class="color-chip"><div class="color-swatch" style="background:#f5ead6;"></div><div class="color-name">画布背景</div><div class="color-hex">#f5ead6</div></div>
       <div class="color-chip"><div class="color-swatch" style="background:#f5d850;"></div><div class="color-name">花瓣亮金</div><div class="color-hex">#f5d850</div></div>
       <div class="color-chip"><div class="color-swatch" style="background:#b8881e;"></div><div class="color-name">花瓣深金</div><div class="color-hex">#b8881e</div></div>
-      <div class="color-chip"><div class="color-swatch" style="background:#dd5500;"></div><div class="color-name">花蕊橙色</div><div class="color-hex">#dd5500</div></div>
       <div class="color-chip"><div class="color-swatch" style="background:#5a7a36;"></div><div class="color-name">茎叶绿色</div><div class="color-hex">#5a7a36</div></div>
-      <div class="color-chip"><div class="color-swatch" style="background:#8a7050;"></div><div class="color-name">外框金色</div><div class="color-hex">#8a7050</div></div>
+      <div class="color-chip"><div class="color-swatch" style="background:#b8a080;"></div><div class="color-name">外框金色</div><div class="color-hex">#b8a080</div></div>
     </div>
   </div>
 
@@ -155,22 +151,21 @@
   <div class="section-title">设计说明</div>
   <div class="card" style="display:flex;gap:24px;flex-wrap:wrap;">
     <div style="flex:1;min-width:200px;">
-      <h4 style="font-size:14px;font-weight:600;color:#d4a828;margin-bottom:10px;">设计要点</h4>
+      <h4 style="font-size:14px;font-weight:600;color:#c49420;margin-bottom:10px;">设计要点</h4>
       <ul style="list-style:none;font-size:13px;color:#a09080;line-height:2;">
-        <li>🎨 油画风格 — 告别扁平化</li>
-        <li>🌻 花朵侧视面向右侧</li>
+        <li>🎨 油画风格 — 侧视花朵</li>
+        <li>☀️ 明亮暖色背景</li>
         <li>🌿 花茎+绿叶完整搭配</li>
         <li>🌟 14 层渐变花瓣叠加</li>
-        <li>✨ SVG 滤镜柔光效果</li>
-        <li>🟤 暗色暖底传达沉稳感</li>
+        <li>💛 无花蕊 — 只留花瓣</li>
       </ul>
     </div>
     <div style="flex:1;min-width:200px;">
-      <h4 style="font-size:14px;font-weight:600;color:#d4a828;margin-bottom:10px;">前端实现</h4>
+      <h4 style="font-size:14px;font-weight:600;color:#c49420;margin-bottom:10px;">前端实现</h4>
       <ul style="list-style:none;font-size:13px;color:#a09080;line-height:2;">
         <li>1. SVG 源 → icon-gen/icon-v4.svg</li>
         <li>2. 512×512 → icons/icon.png ✅</li>
-        <li>3. <code style="background:#2a2218;padding:2px 6px;border-radius:4px;color:#d0b080;">npx tauri icon icon.png</code></li>
+        <li>3. <code style="background:#e8dcc8;padding:2px 6px;border-radius:4px;color:#8a7a60;">npx tauri icon icon.png</code></li>
         <li>4. 自动生成 .ico / .icns</li>
         <li>5. 已提交到 git 仓库</li>
       </ul>
@@ -179,17 +174,13 @@
 
 </div>
 
-<!-- Preserved V4 Flower SVG -->
+<!-- Updated V4 Flower SVG (bright bg, no stamen) -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
   <defs>
     <radialGradient id="bgGrad" cx="44%" cy="38%" r="78%">
-      <stop offset="0%" stop-color="#3d2816"/>
-      <stop offset="35%" stop-color="#20140e"/>
-      <stop offset="100%" stop-color="#080605"/>
-    </radialGradient>
-    <radialGradient id="vignette" cx="50%" cy="50%" r="50%">
-      <stop offset="45%" stop-color="#000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000" stop-opacity="0.55"/>
+      <stop offset="0%" stop-color="#f5ead6"/>
+      <stop offset="40%" stop-color="#e8d4b0"/>
+      <stop offset="100%" stop-color="#d4bea0"/>
     </radialGradient>
     <linearGradient id="bPetal" x1="30%" y1="0%" x2="70%" y2="100%">
       <stop offset="0%" stop-color="#7a5a1e"/>
@@ -220,15 +211,6 @@
       <stop offset="40%" stop-color="#f5c838"/>
       <stop offset="100%" stop-color="#c48a18"/>
     </linearGradient>
-    <radialGradient id="stamenBase" cx="40%" cy="40%" r="65%">
-      <stop offset="0%" stop-color="#ff8833"/>
-      <stop offset="45%" stop-color="#dd5500"/>
-      <stop offset="100%" stop-color="#882200"/>
-    </radialGradient>
-    <radialGradient id="stamenGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffaa44" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#ffaa44" stop-opacity="0"/>
-    </radialGradient>
     <linearGradient id="sepalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#4a6a28"/>
       <stop offset="100%" stop-color="#203a12"/>
@@ -262,8 +244,6 @@
   </defs>
   <g id="flowerV4">
     <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bgGrad)"/>
-    <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#vignette)"/>
-    <rect x="26" y="26" width="460" height="460" rx="86" ry="86" fill="none" stroke="#4a3520" stroke-width="0.5" opacity="0.3"/>
     <g filter="url(#shadow)">
       <path d="M212 216 C212 300 207 355 197 440 L210 440 C215 355 220 300 218 216Z" fill="url(#stemGrad)"/>
       <path d="M214 216 C214 300 210 355 202 440 C207 355 216 300 216 216Z" fill="url(#stemGrad)" opacity="0.5"/>
@@ -305,27 +285,14 @@
     <g filter="url(#shadow)">
       <path d="M198 218 C192 235 195 252 207 258 C218 252 220 235 215 218Z" fill="url(#sepalGrad)"/>
     </g>
-    <circle cx="234" cy="206" r="32" fill="url(#stamenGlow)" filter="url(#softGlow)"/>
-    <ellipse cx="236" cy="208" rx="18" ry="16" fill="url(#stamenBase)" filter="url(#shadow)"/>
-    <ellipse cx="234" cy="205" rx="12" ry="10" fill="#ff8833" opacity="0.6"/>
-    <ellipse cx="232" cy="202" rx="6" ry="5" fill="#ffbb66" opacity="0.7"/>
-    <circle cx="244" cy="202" r="3" fill="#ffcc44" opacity="0.8" filter="url(#softGlow)"/>
-    <circle cx="248" cy="210" r="2.5" fill="#ffcc44" opacity="0.7"/>
-    <circle cx="240" cy="218" r="3" fill="#ffcc44" opacity="0.75"/>
-    <circle cx="230" cy="216" r="2.5" fill="#ffcc44" opacity="0.65"/>
-    <circle cx="226" cy="202" r="2.5" fill="#ffcc44" opacity="0.7"/>
-    <circle cx="242" cy="207" r="2" fill="#ffdd66" opacity="0.6"/>
-    <circle cx="234" cy="220" r="2" fill="#ffdd66" opacity="0.6"/>
-    <circle cx="250" cy="206" r="2" fill="#ffdd66" opacity="0.55"/>
-    <circle cx="250" cy="195" r="140" fill="#ffaa44" opacity="0.04" filter="url(#softGlow)"/>
-    <circle cx="280" cy="185" r="80" fill="#ffcc66" opacity="0.03" filter="url(#softGlow)"/>
-    <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#5a4530" stroke-width="2.5"/>
-    <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#8a7050" stroke-width="0.8" opacity="0.5"/>
+    <ellipse cx="212" cy="204" rx="7" ry="9" fill="#5a4020" opacity="0.35"/>
+    <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#b8a080" stroke-width="2.5"/>
+    <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="none" stroke="#d4c0a0" stroke-width="0.8" opacity="0.6"/>
   </g>
   <g id="folderIcon">
-    <rect x="64" y="128" width="384" height="320" rx="48" fill="#3a2a1a"/>
-    <rect x="64" y="128" width="384" height="256" rx="48" fill="#4a3a2a"/>
-    <rect x="128" y="176" width="320" height="48" rx="8" fill="#5a4a3a" opacity="0.5"/>
+    <rect x="64" y="128" width="384" height="320" rx="48" fill="#e0d4c0"/>
+    <rect x="64" y="128" width="384" height="256" rx="48" fill="#e8dcc8"/>
+    <rect x="128" y="176" width="320" height="48" rx="8" fill="#d4c8b0" opacity="0.5"/>
   </g>
 </svg>
 </body>
